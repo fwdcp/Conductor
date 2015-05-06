@@ -1,0 +1,20 @@
+{
+  "name": "conductor",
+  "version": "0.1.0",
+  "description": "a TF2 server auto-updater and manager",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fwdcp/Conductor.git"
+  },
+  "author": "Forward Command Post",
+  "private": true,
+  "license": "none",
+  "bugs": {
+    "url": "https://github.com/fwdcp/Conductor/issues"
+  },
+  "homepage": "https://github.com/fwdcp/Conductor#readme"
+}

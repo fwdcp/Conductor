@@ -3,6 +3,7 @@
 var async = require('async-q');
 var fs = require('fs-extra');
 var NodeGit = require('nodegit');
+var path = require('path');
 var Q = require('q');
 var yargs = require('yargs');
 
@@ -40,37 +41,41 @@ var argv = yargs
     .alias('h', 'help')
     .argv;
 
+var hl2sdk = path.resolve(argv.hl2sdk);
+var metamod = path.resolve(argv.metamod);
+var sourcemod = path.resolve(argv.sourcemod);
+
 async.auto({
     'hl2sdk': function() {
-        return NodeGit.Repository.open(argv.hl2sdk).catch(function() {
-            return Q.nfcall(fs.mkdirs, argv.hl2sdk)
+        return NodeGit.Repository.open(hl2sdk).catch(function() {
+            return Q.nfcall(fs.mkdirs, hl2sdk)
                 .then(function() {
-                    return Q.nfcall(fs.emptyDir, argv.hl2sdk);
+                    return Q.nfcall(fs.emptyDir, hl2sdk);
                 })
                 .then(function() {
-                    return NodeGit.Clone('https://github.com/alliedmodders/hl2sdk.git', argv.hl2sdk);
+                    return NodeGit.Clone('https://github.com/alliedmodders/hl2sdk.git', hl2sdk);
                 });
         });
     },
     'metamod': function() {
-        return NodeGit.Repository.open(argv.metamod).catch(function() {
-            return Q.nfcall(fs.mkdirs, argv.metamod)
+        return NodeGit.Repository.open(metamod).catch(function() {
+            return Q.nfcall(fs.mkdirs, metamod)
                 .then(function() {
-                    return Q.nfcall(fs.emptyDir, argv.metamod);
+                    return Q.nfcall(fs.emptyDir, metamod);
                 })
                 .then(function() {
-                    return NodeGit.Clone('https://github.com/alliedmodders/metamod-source.git', argv.metamod);
+                    return NodeGit.Clone('https://github.com/alliedmodders/metamod-source.git', metamod);
                 });
         });
     },
     'sourcemod': function() {
-        return NodeGit.Repository.open(argv.sourcemod).catch(function() {
-            return Q.nfcall(fs.mkdirs, argv.sourcemod)
+        return NodeGit.Repository.open(sourcemod).catch(function() {
+            return Q.nfcall(fs.mkdirs, sourcemod)
                 .then(function() {
-                    return Q.nfcall(fs.emptyDir, argv.sourcemod);
+                    return Q.nfcall(fs.emptyDir, sourcemod);
                 })
                 .then(function() {
-                    return NodeGit.Clone('https://github.com/alliedmodders/sourcemod.git', argv.sourcemod);
+                    return NodeGit.Clone('https://github.com/alliedmodders/sourcemod.git', sourcemod);
                 });
         });
     },

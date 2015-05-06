@@ -1,9 +1,16 @@
 #! /usr/bin/env node
 
-var NodeGit = require("nodegit");
+var asyncQ = require('async-q');
+var fs = require('fs-extra');
+var NodeGit = require('nodegit');
 var yargs = require('yargs');
 
 var argv = yargs
+    .usage('$0 <command> <server-path>')
+    .command('install', 'install a server')
+    .command('update', 'update a server')
+    .command('run', 'run a server')
+    .command('run-updated', 'run a server after updating it')
     .default('hl2sdk', './hl2sdk')
     .describe('hl2sdk', 'path to the HL2SDK Git repository')
     .requiresArg('hl2sdk')
@@ -32,4 +39,38 @@ var argv = yargs
     .alias('h', 'help')
     .argv;
 
-NodeGit.Repository.open(argv.hl2sdk).done();
+async.auto({
+    'hl2sdk': function() {
+        return NodeGit.Repository.open(argv.hl2sdk).catch(function() {
+            return Q.nfcall(fs.mkdirs, argv.hl2sdk)
+                .then(function() {
+                    return Q.nfcall(fs.emptyDir, argv.hl2sdk);
+                })
+                .then(function() {
+                    return NodeGit.Clone('https://github.com/alliedmodders/hl2sdk.git', argv.hl2sdk);
+                });
+        });
+    },
+    'metamod': function() {
+        return NodeGit.Repository.open(argv.metamod).catch(function() {
+            return Q.nfcall(fs.mkdirs, argv.metamod)
+                .then(function() {
+                    return Q.nfcall(fs.emptyDir, argv.metamod);
+                })
+                .then(function() {
+                    return NodeGit.Clone('https://github.com/alliedmodders/metamod-source.git', argv.hl2sdk);
+                });
+        });
+    },
+    'sourcemod': function() {
+        return NodeGit.Repository.open(argv.sourcemod).catch(function() {
+            return Q.nfcall(fs.mkdirs, argv.sourcemod)
+                .then(function() {
+                    return Q.nfcall(fs.emptyDir, argv.sourcemod);
+                })
+                .then(function() {
+                    return NodeGit.Clone('https://github.com/alliedmodders/sourcemod.git', argv.hl2sdk);
+                });
+        });
+    }
+});

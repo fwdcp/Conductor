@@ -18,7 +18,8 @@
     "filesearch": "index.js"
   },
   "dependencies": {
-    "mkdirp": "^0.5.0",
+    "async-q": "^0.2.2",
+    "fs-extra": "^0.18.2",
     "nodegit": "^0.3.3",
     "yargs": "^3.8.0"
   }

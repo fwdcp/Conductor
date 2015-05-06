@@ -3,6 +3,7 @@
 var async = require('async-q');
 var fs = require('fs-extra');
 var NodeGit = require('nodegit');
+var Q = require('q');
 var yargs = require('yargs');
 
 var argv = yargs

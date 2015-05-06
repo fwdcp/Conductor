@@ -1,6 +1,6 @@
 #! /usr/bin/env node
 
-var asyncQ = require('async-q');
+var async = require('async-q');
 var fs = require('fs-extra');
 var NodeGit = require('nodegit');
 var yargs = require('yargs');

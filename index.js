@@ -59,7 +59,7 @@ async.auto({
                     return Q.nfcall(fs.emptyDir, argv.metamod);
                 })
                 .then(function() {
-                    return NodeGit.Clone('https://github.com/alliedmodders/metamod-source.git', argv.hl2sdk);
+                    return NodeGit.Clone('https://github.com/alliedmodders/metamod-source.git', argv.metamod);
                 });
         });
     },
@@ -70,8 +70,11 @@ async.auto({
                     return Q.nfcall(fs.emptyDir, argv.sourcemod);
                 })
                 .then(function() {
-                    return NodeGit.Clone('https://github.com/alliedmodders/sourcemod.git', argv.hl2sdk);
+                    return NodeGit.Clone('https://github.com/alliedmodders/sourcemod.git', argv.sourcemod);
                 });
         });
-    }
+    },
+    'metamod-build': ['hl2sdk', 'metamod', function(results) {
+        console.log(arguments);
+    }]
 }).done();

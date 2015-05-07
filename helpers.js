@@ -93,7 +93,7 @@ exports.checkoutRepo = function(name, repoPath, url, refName) {
                                 })
                             })
                             .then(function(ref) {
-                                return NodeGit.Checkout.tree(repo, ref).then(function() {
+                                return NodeGit.Checkout.tree(repo, ref.target()).then(function() {
                                     return repo.setHead(ref.name(), repo.defaultSignature(), 'Switched to ' + refName);
                                 });
                             })
@@ -105,9 +105,6 @@ exports.checkoutRepo = function(name, repoPath, url, refName) {
                                         });
                                     });
                             })
-                    })
-                    .then(function() {
-                        return NodeGit.Checkout.head(repo, {checkoutStrategy: NodeGit.Checkout.STRATEGY.FORCE});
                     })
                     .then(function() {
                         return repo;

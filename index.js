@@ -70,7 +70,7 @@ function checkoutRepo(name, repoPath, url, refName) {
                     return NodeGit.Clone(url, repoPath);
                 });
         })
-        .then(function() {
+        .then(function(repo) {
             if (refName) {
                 return repo.getStatusExt()
                     .then(function(statuses) {
@@ -82,10 +82,13 @@ function checkoutRepo(name, repoPath, url, refName) {
                         return repo.getReference(refName).then(function(ref) {
                             return NodeGit.Checkout.tree(repo, ref, {checkoutStrategy: NodeGit.Checkout.STRATEGY.FORCE});
                         });
+                    })
+                    .then(function() {
+                        return repo;
                     });
             }
         })
-        .then(function() {
+        .then(function(repo) {
             return NodeGit.Submodule.reloadAll(repo, 1)
                 .then(function() {
                     return Q.nfcall(fs.readFile, path.join(repoPath, '.gitmodules'), 'utf-8')

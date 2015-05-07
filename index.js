@@ -53,7 +53,11 @@ async.auto({
                     return Q.nfcall(fs.emptyDir, hl2sdk);
                 })
                 .then(function() {
-                    return NodeGit.Clone('https://github.com/alliedmodders/hl2sdk.git', hl2sdk);
+                    var cloneOptions = new NodeGit.CloneOptions();
+                    NodeGit.Clone.initOptions(cloneOptions, NodeGit.GIT_CLONE_OPTIONS_VERSION);
+                    cloneOptions.checkoutBranch = 'tf2';
+
+                    return NodeGit.Clone('https://github.com/alliedmodders/hl2sdk.git', hl2sdk, cloneOptions);
                 });
         });
     },
@@ -64,7 +68,11 @@ async.auto({
                     return Q.nfcall(fs.emptyDir, metamod);
                 })
                 .then(function() {
-                    return NodeGit.Clone('https://github.com/alliedmodders/metamod-source.git', metamod);
+                    var cloneOptions = new NodeGit.CloneOptions();
+                    NodeGit.Clone.initOptions(cloneOptions, NodeGit.GIT_CLONE_OPTIONS_VERSION);
+                    cloneOptions.checkoutBranch = argv.metamod-branch || 'master';
+
+                    return NodeGit.Clone('https://github.com/alliedmodders/metamod-source.git', metamod, cloneOptions);
                 });
         });
     },
@@ -75,7 +83,11 @@ async.auto({
                     return Q.nfcall(fs.emptyDir, sourcemod);
                 })
                 .then(function() {
-                    return NodeGit.Clone('https://github.com/alliedmodders/sourcemod.git', sourcemod);
+                    var cloneOptions = new NodeGit.CloneOptions();
+                    NodeGit.Clone.initOptions(cloneOptions, NodeGit.GIT_CLONE_OPTIONS_VERSION);
+                    cloneOptions.checkoutBranch = argv.sourcemod-branch || 'master';
+
+                    return NodeGit.Clone('https://github.com/alliedmodders/sourcemod.git', sourcemod, cloneOptions);
                 });
         });
     },

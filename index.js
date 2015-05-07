@@ -45,8 +45,8 @@ function checkoutBranchOfRepo(path, url, branchName) {
     return NodeGit.Repository.open(path).then(function(repo) {
         return NodeGit.Remote.lookup(repo, 'origin').catch(function() {
             return NodeGit.Remote.create(repo, 'origin', url);
-        }).then(function() {
-            return repo.fetchAll();
+        }).then(function(remote) {
+            return remote.fetch(null, repo.defaultSignature(), null);
         }).then(function() {
             return NodeGit.Branch.lookup(repo, branchName, NodeGit.Branch.BRANCH.LOCAL).then(function() {
                 return repo.mergeBranches(branchName, 'origin/' + branchName);

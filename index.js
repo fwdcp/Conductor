@@ -59,11 +59,13 @@ function checkoutBranchOfRepo(path, url, branchName) {
                 });
             });
         }).then(function() {
-            return repo.head().then(function(ref) {
-                return NodeGit.Diff.treeToWorkdirWithIndex(repo, ref);
-            }).then(function(diff) {
-                if (diff.numDeltas() == 0) {
-                    return repo.checkoutBranch(branchName, {checkoutStrategy: NodeGit.Checkout.STRATEGY.FORCE});
+            return repo.index().then(function(index) {
+                if (index.entryCount() == 0) {
+                    return NodeGit.Diff.indexToWorkdir(repo, index).then(function(diff) {
+                        if (diff.numDeltas() == 0) {
+                            return repo.checkoutBranch(branchName, {checkoutStrategy: NodeGit.Checkout.STRATEGY.FORCE});
+                        }
+                    });
                 }
             }).then(function() {
                 return repo;

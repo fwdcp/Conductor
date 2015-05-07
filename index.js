@@ -53,6 +53,9 @@ function checkoutBranchOfRepo(path, url, branchName) {
             }, function() {
                 return repo.getBranchCommit('origin/' + branchName).then(function(commit) {
                     return NodeGit.Branch.create(repo, branchName, commit, true, NodeGit.Signature.default(repo));
+                }).then(function() {
+                    branch.setUpstream(branchName, 'origin');
+                    return NodeGit.Branch.lookup(repo, branchName, NodeGit.Branch.BRANCH.LOCAL);
                 });
             });
         }).then(function() {

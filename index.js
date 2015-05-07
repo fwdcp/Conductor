@@ -116,6 +116,41 @@ function checkoutBranchOfRepo(name, repoPath, url, branchName) {
         });
 }
 
+function steamcmdUpdate(name, steamcmd, appid, username, password) {
+    return Q.fcall(function() {
+        var deferred = Q.defer();
+
+        var update = child_process.spawn('./steamcmd.sh', [
+            '+login', username, password,
+            '+app_update', appid, 'validate',
+            '+quit'
+        ].concat(extraArgs), {
+            cwd: steamcmd
+        });
+
+        update.stderr.pipe(process.stderr);
+
+        update.on('exit', function(code, signal) {
+            if (signal) {
+                deferred.reject(new Error('SteamCMD was killed with signal: ' + signal));
+            }
+            else if (code) {
+                deferred.reject(new Error('SteamCMD exited with code: ' + code));
+            }
+            else {
+                deferred.resolve();
+            }
+        });
+
+        return deferred.promise;
+    })
+    .catch(function(err) {
+        if (err) {
+            throw new Error('When updating ' + name + ': ' + err);
+        }
+    });
+}
+
 function ambuild(name, repo, extraArgs, extraEnv) {
     var env = {}
     extend(env, process.env, extraEnv);
@@ -183,6 +218,10 @@ var command = argv._[0];
 
 if (command !== 'run') {
     extend(tasks, {
+        'srcds': function() {
+            console.log(chalk.cyan('Downloading the dedicated server for TF2...'));
+            return steamcmdUpdate('SRCDS', path.resolve(argv.steamcmd), 232250, 'anonymous', '');
+        },
         'hl2sdk': function() {
             console.log(chalk.cyan('Downloading the HL2SDK for TF2...'));
             return checkoutBranchOfRepo('HL2SDK', path.resolve(argv.hl2sdk), 'https://github.com/alliedmodders/hl2sdk.git', 'tf2');

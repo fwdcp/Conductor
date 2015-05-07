@@ -47,7 +47,7 @@ var argv = yargs
     .alias('h', 'help')
     .argv;
 
-function checkoutBranchOfRepo(name, repoPath, url, branchName) {
+function checkoutRepo(name, repoPath, url, branchName) {
     return NodeGit.Repository.open(repoPath)
         .then(function(repo) {
             return NodeGit.Remote.lookup(repo, 'origin').catch(function() {
@@ -124,7 +124,7 @@ function steamcmdUpdate(name, steamcmd, appid, username, password) {
             '+login', username, password,
             '+app_update', appid, 'validate',
             '+quit'
-        ].concat(extraArgs), {
+        ], {
             cwd: steamcmd
         });
 
@@ -224,15 +224,15 @@ if (command !== 'run') {
         },
         'hl2sdk': function() {
             console.log(chalk.cyan('Downloading the HL2SDK for TF2...'));
-            return checkoutBranchOfRepo('HL2SDK', path.resolve(argv.hl2sdk), 'https://github.com/alliedmodders/hl2sdk.git', 'tf2');
+            return checkoutRepo('HL2SDK', path.resolve(argv.hl2sdk), 'https://github.com/alliedmodders/hl2sdk.git', 'tf2');
         },
         'metamod': function() {
             console.log(chalk.cyan('Downloading the Metamod:Source source...'));
-            return checkoutBranchOfRepo('Metamod:Source', path.resolve(argv.metamod), 'https://github.com/alliedmodders/metamod-source.git', argv.metamodBranch || 'master');
+            return checkoutRepo('Metamod:Source', path.resolve(argv.metamod), 'https://github.com/alliedmodders/metamod-source.git', argv.metamodBranch || 'master');
         },
         'sourcemod': function() {
             console.log(chalk.cyan('Downloading the SourceMod source...'));
-            return checkoutBranchOfRepo('SourceMod', path.resolve(argv.sourcemod), 'https://github.com/alliedmodders/sourcemod.git', argv.sourcemodBranch || 'master');
+            return checkoutRepo('SourceMod', path.resolve(argv.sourcemod), 'https://github.com/alliedmodders/sourcemod.git', argv.sourcemodBranch || 'master');
         },
         'metamod-build': ['hl2sdk', 'metamod', function(results) {
             console.log(chalk.magenta('Building Metamod:Source with AMBuild...'));

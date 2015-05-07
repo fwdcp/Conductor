@@ -48,11 +48,11 @@ function checkoutBranchOfRepo(path, url, branchName) {
         }).then(function() {
             return repo.fetchAll();
         }).then(function() {
-            return NodeGit.Branch.lookup(repo, branchName, NodeGitBranch.BRANCH.LOCAL).then(function(branch) {
+            return NodeGit.Branch.lookup(repo, branchName, NodeGit.Branch.BRANCH.LOCAL).then(function() {
                 return repo.mergeBranches(branchName, 'origin/' + branchName);
             }, function() {
                 return repo.getBranchCommit('origin/' + branchName).then(function(commit) {
-                    return NodeGit.Branch.create(repo, branchName, commit, true, Signature.default(repo));
+                    return NodeGit.Branch.create(repo, branchName, commit, true, NodeGit.Signature.default(repo));
                 });
             });
         }).then(function() {

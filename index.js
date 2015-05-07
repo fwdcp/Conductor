@@ -91,13 +91,21 @@ async.auto({
     },
     'metamod-build': ['hl2sdk', 'metamod', function(results) {
         var metamodPath = path.resolve(argv.metamod);
+        var env = {};
+        Object.assign(env, process.env);
+        env['HL2SDKTF2'] = path.resolve(argv.hl2sdk);
+
         fs.mkdirs(path.join(metamodPath, 'build'), function(err) {
             if (err) {
                 throw err;
             }
 
-            var configure = child_process.spawn('python', [path.join(metamodPath, 'configure.py')], {
-                cwd: path.join(metamodPath, 'build');
+            var configure = child_process.spawn('python', [
+                path.join(metamodPath, 'configure.py'),
+                '--sdks=tf2'
+            ], {
+                cwd: path.join(metamodPath, 'build'),
+                env: env
             });
 
             configure.stdout.pipe(process.stdout);

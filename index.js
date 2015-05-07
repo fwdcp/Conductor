@@ -79,13 +79,10 @@ function checkoutRepo(name, repoPath, url, refName) {
                         }
                     })
                     .then(function() {
-                        return repo.getReferenceCommit(refName)
-                            .catch(function() {
-                                return repo.getReferenceCommit('origin/' + refName);
-                            })
-                            .then(function(commit) {
-                                return NodeGit.Checkout.tree(repo, commit, {checkoutStrategy: NodeGit.Checkout.STRATEGY.FORCE});
-                            });
+                        return repo.setHead(refName, repo.defaultSignature(), 'Switched to ' + refName);
+                    })
+                    .then(function() {
+                        return NodeGit.Checkout.head(repo, {checkoutStrategy: NodeGit.Checkout.STRATEGY.FORCE});
                     })
                     .then(function() {
                         return repo;

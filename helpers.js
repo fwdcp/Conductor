@@ -95,21 +95,32 @@ exports.checkoutRepo = function(name, repoPath, url, refName) {
                             .then(function(ref) {
                                 return Q.fcall(function() {
                                         if (ref.isTag()) {
-                                            return repo.getTag(ref.target()).then(function(tag) {
-                                                return repo.getCommit(tag.targetId());
-                                            });
+                                            return repo.getTag(ref.target())
+                                                .then(function(tag) {
+                                                    return repo.getCommit(tag.targetId())
+                                                        .then(function(commit) {
+                                                            return commit.getTree();
+                                                        })
+                                                        .then(function(tree) {
+                                                            return NodeGit.Checkout.tree(repo, tree);
+                                                        })
+                                                        .then(function() {
+                                                            return repo.setHeadDetached(tag.targetId(), repo.defaultSignature(), 'Switched to ' + refName);
+                                                        });
+                                                });
                                         }
-
-                                        return repo.getCommit(ref.target());
-                                    })
-                                    .then(function(commit) {
-                                        return commit.getTree();
-                                    })
-                                    .then(function(tree) {
-                                        return NodeGit.Checkout.tree(repo, tree);
-                                    })
-                                    .then(function() {
-                                        return repo.setHead(ref.name(), repo.defaultSignature(), 'Switched to ' + refName);
+                                        else {
+                                            return repo.getCommit(ref.target())
+                                                .then(function(commit) {
+                                                    return commit.getTree();
+                                                })
+                                                .then(function(tree) {
+                                                    return NodeGit.Checkout.tree(repo, tree);
+                                                })
+                                                .then(function() {
+                                                    return repo.setHead(ref.name(), repo.defaultSignature(), 'Switched to ' + refName);
+                                                });
+                                        }
                                     });
                             })
                             .catch(function() {

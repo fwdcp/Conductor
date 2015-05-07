@@ -1,6 +1,7 @@
 #! /usr/bin/env node
 
 var async = require('async-q');
+var chalk = require('chalk');
 var child_process = require('child_process');
 var extend = require('extend');
 var fs = require('fs-extra');
@@ -68,7 +69,7 @@ function checkoutBranchOfRepo(repoPath, url, branchName) {
                 })
                 .then(function() {
                     return repo.getStatusExt().then(function(statuses) {
-                        if (statuses.length == 0) {
+                        if (statuses.length === 0) {
                             return repo.checkoutBranch(branchName, {checkoutStrategy: NodeGit.Checkout.STRATEGY.FORCE});
                         }
                     });
@@ -123,12 +124,12 @@ function ambuild(repo, extraArgs, extraEnv) {
                 env: env
             });
 
-            configure.stdout.pipe(process.stdout);
-            configure.stderr.pipe(process.stderr);
-
             configure.on('exit', function(code, signal) {
-                if (signal || code) {
-                    deferred.reject(new Error(signal || code));
+                if (signal) {
+                    deferred.reject(new Error('Configure script for ' + repo + ' was killed with signal: ' + signal));
+                }
+                else if (code) {
+                    deferred.reject(new Error('Configure script for ' + repo + ' exited with code: ' + code));
                 }
                 else {
                     deferred.resolve();
@@ -144,12 +145,12 @@ function ambuild(repo, extraArgs, extraEnv) {
                 cwd: path.join(repo, 'build')
             });
 
-            build.stdout.pipe(process.stdout);
-            build.stderr.pipe(process.stderr);
-
             build.on('exit', function(code, signal) {
-                if (signal || code) {
-                    deferred.reject(new Error(signal || code));
+                if (signal) {
+                    deferred.reject(new Error('Build process for ' + repo + ' was killed with signal: ' + signal));
+                }
+                else if (code) {
+                    deferred.reject(new Error('Build process for ' + repo + ' exited with code: ' + code));
                 }
                 else {
                     deferred.resolve();
@@ -160,20 +161,63 @@ function ambuild(repo, extraArgs, extraEnv) {
         });
 }
 
-async.auto({
-    'hl2sdk': function() {
-        return checkoutBranchOfRepo(path.resolve(argv.hl2sdk), 'https://github.com/alliedmodders/hl2sdk.git', 'tf2');
-    },
-    'metamod': function() {
-        return checkoutBranchOfRepo(path.resolve(argv.metamod), 'https://github.com/alliedmodders/metamod-source.git', argv.metamodBranch || 'master');
-    },
-    'sourcemod': function() {
-        return checkoutBranchOfRepo(path.resolve(argv.sourcemod), 'https://github.com/alliedmodders/sourcemod.git', argv.sourcemodBranch || 'master');
-    },
-    'metamod-build': ['hl2sdk', 'metamod', function(results) {
-        return ambuild(path.resolve(argv.metamod), ['--sdks=tf2'], {'HL2SDKTF2': path.resolve(argv.hl2sdk)});
-    }],
-    'sourcemod-build': ['hl2sdk', 'metamod', 'sourcemod', function(results) {
-        return ambuild(path.resolve(argv.sourcemod), ['--sdks=tf2', '--no-mysql'], {'HL2SDKTF2': path.resolve(argv.hl2sdk), 'MMSOURCE_DEV': path.resolve(argv.metamod)});
-    }]
-}).done();
+var tasks = {};
+
+var command = argv._[0];
+
+if (command !== 'run') {
+    extend(tasks, {
+        'hl2sdk': function() {
+            console.log(chalk.cyan('Downloading the HL2 SDK for TF2...'));
+            return checkoutBranchOfRepo(path.resolve(argv.hl2sdk), 'https://github.com/alliedmodders/hl2sdk.git', 'tf2');
+        },
+        'metamod': function() {
+            console.log(chalk.cyan('Downloading the Metamod:Source source...'));
+            return checkoutBranchOfRepo(path.resolve(argv.metamod), 'https://github.com/alliedmodders/metamod-source.git', argv.metamodBranch || 'master');
+        },
+        'sourcemod': function() {
+            console.log(chalk.cyan('Downloading the SourceMod source...'));
+            return checkoutBranchOfRepo(path.resolve(argv.sourcemod), 'https://github.com/alliedmodders/sourcemod.git', argv.sourcemodBranch || 'master');
+        },
+        'metamod-build': ['hl2sdk', 'metamod', function(results) {
+            console.log(chalk.blue('Building Metamod:Source with AMBuild...'));
+            return ambuild(path.resolve(argv.metamod), ['--sdks=tf2'], {'HL2SDKTF2': path.resolve(argv.hl2sdk)});
+        }],
+        'sourcemod-build': ['hl2sdk', 'metamod', 'sourcemod', function(results) {
+            console.log(chalk.blue('Building SourceMod with AMBuild...'));
+            return ambuild(path.resolve(argv.sourcemod), ['--sdks=tf2', '--no-mysql'], {'HL2SDKTF2': path.resolve(argv.hl2sdk), 'MMSOURCE_DEV': path.resolve(argv.metamod)});
+        }]
+    });
+}
+
+if (command === 'install') {
+    async.auto(tasks).catch(function(err) {
+        if (err) {
+            console.log(chalk.bgRed('Error encountered: ' + err));
+        }
+    });
+}
+else if (command === 'update') {
+    async.auto(tasks).catch(function(err) {
+        if (err) {
+            console.log(chalk.bgRed('Error encountered: ' + err));
+        }
+    });
+}
+else if (command === 'run') {
+    async.auto(tasks).catch(function(err) {
+        if (err) {
+            console.log(chalk.bgRed('Error encountered: ' + err));
+        }
+    });
+}
+else if (command === 'run-updated') {
+    async.auto(tasks).catch(function(err) {
+        if (err) {
+            console.log(chalk.bgRed('Error encountered: ' + err));
+        }
+    });
+}
+else {
+    yargs.showHelp();
+}

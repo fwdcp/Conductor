@@ -60,7 +60,7 @@ function checkoutBranchOfRepo(path, url, branchName) {
             });
         }).then(function() {
             return repo.head().then(function(ref) {
-                return Diff.treeToWorkdirWithIndex(repo, ref)
+                return NodeGit.Diff.treeToWorkdirWithIndex(repo, ref);
             }).then(function(diff) {
                 if (diff.numDeltas() == 0) {
                     return repo.checkoutBranch(branchName, {checkoutStrategy: NodeGit.Checkout.STRATEGY.FORCE});

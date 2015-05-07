@@ -65,7 +65,7 @@ function checkoutBranchOfRepo(path, url, branchName) {
                 return Q.nfcall(fs.emptyDir, path);
             })
             .then(function() {
-                return NodeGit.Clone(branchName, url, {checkoutBranch: branchName});
+                return NodeGit.Clone(url, path, {checkoutBranch: branchName});
             });
     });
 }

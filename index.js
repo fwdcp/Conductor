@@ -53,11 +53,7 @@ async.auto({
                     return Q.nfcall(fs.emptyDir, hl2sdk);
                 })
                 .then(function() {
-                    var cloneOptions = new NodeGit.CloneOptions();
-                    NodeGit.Clone.initOptions(cloneOptions, NodeGit.GIT_CLONE_OPTIONS_VERSION);
-                    cloneOptions.checkoutBranch = 'tf2';
-
-                    return NodeGit.Clone('https://github.com/alliedmodders/hl2sdk.git', hl2sdk, cloneOptions);
+                    return NodeGit.Clone('https://github.com/alliedmodders/hl2sdk.git', hl2sdk, {checkoutBranch: 'tf2'});
                 });
         });
     },
@@ -68,11 +64,7 @@ async.auto({
                     return Q.nfcall(fs.emptyDir, metamod);
                 })
                 .then(function() {
-                    var cloneOptions = new NodeGit.CloneOptions();
-                    NodeGit.Clone.initOptions(cloneOptions, NodeGit.GIT_CLONE_OPTIONS_VERSION);
-                    cloneOptions.checkoutBranch = argv.metamod-branch || 'master';
-
-                    return NodeGit.Clone('https://github.com/alliedmodders/metamod-source.git', metamod, cloneOptions);
+                    return NodeGit.Clone('https://github.com/alliedmodders/metamod-source.git', metamod, {checkoutBranch: argv.metamod-branch || 'master'});
                 });
         });
     },
@@ -83,11 +75,7 @@ async.auto({
                     return Q.nfcall(fs.emptyDir, sourcemod);
                 })
                 .then(function() {
-                    var cloneOptions = new NodeGit.CloneOptions();
-                    NodeGit.Clone.initOptions(cloneOptions, NodeGit.GIT_CLONE_OPTIONS_VERSION);
-                    cloneOptions.checkoutBranch = argv.sourcemod-branch || 'master';
-
-                    return NodeGit.Clone('https://github.com/alliedmodders/sourcemod.git', sourcemod, cloneOptions);
+                    return NodeGit.Clone('https://github.com/alliedmodders/sourcemod.git', sourcemod, {checkoutBranch: argv.sourcemod-branch || 'master'});
                 });
         });
     },

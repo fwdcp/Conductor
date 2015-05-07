@@ -75,7 +75,7 @@ function checkoutBranchOfRepo(repoPath, url, branchName) {
                 })
                 .then(function() {
                     return NodeGit.Submodule.reloadAll(repo, 1);
-                });
+                })
                 .then(function() {
                     return Q.nfcall(fs.read, path.join(repoPath, '.gitmodules', 'utf-8'))
                         .then(function(data) {
@@ -93,7 +93,7 @@ function checkoutBranchOfRepo(repoPath, url, branchName) {
                         }, function() {
                             return;
                         });
-                });
+                })
                 .then(function() {
                     return repo;
                 });

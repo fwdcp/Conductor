@@ -93,7 +93,15 @@ exports.checkoutRepo = function(name, repoPath, url, refName) {
                                 })
                             })
                             .then(function(ref) {
-                                return repo.getCommit(ref.target())
+                                return Q.fcall(function() {
+                                        if (ref.isTag()) {
+                                            return repo.getTag(ref.target()).then(function(tag) {
+                                                return tag.target();
+                                            });
+                                        }
+
+                                        repo.getCommit(ref.target());
+                                    })
                                     .then(function(commit) {
                                         return commit.getTree();
                                     })

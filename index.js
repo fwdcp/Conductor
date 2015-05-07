@@ -59,8 +59,15 @@ function checkoutBranchOfRepo(path, url, branchName) {
                 });
             });
         }).then(function() {
-            repo.checkoutBranch(branchName);
-            return repo;
+            return repo.head().then(function(ref) {
+                return Diff.treeToWorkdirWithIndex(repo, ref)
+            }).then(function(diff) {
+                if (diff.numDeltas() == 0) {
+                    return repo.checkoutBranch(branchName, {checkoutStrategy: NodeGit.Checkout.STRATEGY.FORCE});
+                }
+            }).then(function() {
+                return repo;
+            });
         });
     }, function() {
         return Q.nfcall(fs.mkdirs, path)

@@ -96,11 +96,11 @@ exports.checkoutRepo = function(name, repoPath, url, refName) {
                                 return Q.fcall(function() {
                                         if (ref.isTag()) {
                                             return repo.getTag(ref.target()).then(function(tag) {
-                                                return tag.target();
+                                                return repo.getCommit(tag.targetId());
                                             });
                                         }
 
-                                        repo.getCommit(ref.target());
+                                        return repo.getCommit(ref.target());
                                     })
                                     .then(function(commit) {
                                         return commit.getTree();

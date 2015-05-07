@@ -101,6 +101,9 @@ function ambuild(repo, extraArgs, extraEnv) {
                 env: env
             });
 
+            configure.stdout.pipe(process.stdout);
+            configure.stderr.pipe(process.stderr);
+
             configure.on('exit', function(code, signal) {
                 if (signal || code) {
                     deferred.reject(new Error(signal || code));
@@ -115,11 +118,14 @@ function ambuild(repo, extraArgs, extraEnv) {
         .then(function() {
             var deferred = Q.defer();
 
-            var configure = child_process.spawn('ambuild', {
+            var build = child_process.spawn('ambuild', {
                 cwd: path.join(repo, 'build')
             });
 
-            configure.on('exit', function(code, signal) {
+            build.stdout.pipe(process.stdout);
+            build.stderr.pipe(process.stderr);
+
+            build.on('exit', function(code, signal) {
                 if (signal || code) {
                     deferred.reject(new Error(signal || code));
                 }

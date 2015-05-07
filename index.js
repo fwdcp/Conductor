@@ -29,18 +29,16 @@ var argv = yargs
     .describe('metamod', 'path to the Metamod:Source Git repository')
     .requiresArg('metamod')
     .string('metamod')
-    .default('metamod-branch', '1.10-dev')
-    .describe('metamod-branch', 'branch of Metamod:Source to build')
-    .requiresArg('metamod-branch')
-    .string('metamod-branch')
+    .default('metamod-commit', '1.10-dev')
+    .describe('metamod-commit', 'commit of Metamod:Source to build')
+    .string('metamod-commit')
     .default('sourcemod', './sourcemod')
     .describe('sourcemod', 'path to the SourceMod Git repository')
     .requiresArg('sourcemod')
     .string('sourcemod')
-    .default('sourcemod-branch', '1.7-dev')
-    .describe('sourcemod-branch', 'branch of SourceMod to build')
-    .requiresArg('sourcemod-branch')
-    .string('sourcemod-branch')
+    .default('sourcemod-commit', '1.7-dev')
+    .describe('sourcemod-commit', 'commit of SourceMod to build')
+    .string('sourcemod-commit')
     .config('c')
     .alias('c', 'config')
     .describe('verbose', 'print more information')
@@ -51,7 +49,7 @@ var argv = yargs
     .version('0.1.0')
     .argv;
 
-function checkoutRepo(name, repoPath, url, branchName) {
+function checkoutRepo(name, repoPath, url, refName) {
     return NodeGit.Repository.open(repoPath)
         .then(function(repo) {
             return NodeGit.Remote.lookup(repo, 'origin').catch(function() {
@@ -61,28 +59,34 @@ function checkoutRepo(name, repoPath, url, branchName) {
                     return remote.fetch(null, repo.defaultSignature(), null);
                 })
                 .then(function() {
-                    return NodeGit.Branch.lookup(repo, branchName, NodeGit.Branch.BRANCH.LOCAL)
-                        .then(function() {
-                            return repo.mergeBranches(branchName, 'origin/' + branchName);
-                        }, function() {
-                            return repo.getBranchCommit('origin/' + branchName).then(function(commit) {
-                                return repo.createBranch(branchName, commit, 0, repo.defaultSignature());
-                            }).then(function(branch) {
-                                NodeGit.Branch.setUpstream(branch, 'origin/' + branchName);
-                                return NodeGit.Branch.lookup(repo, branchName, NodeGit.Branch.BRANCH.LOCAL);
-                            });
-                        });
+                    return repo;
+                });
+        }, function() {
+            return Q.nfcall(fs.mkdirs, repoPath)
+                .then(function() {
+                    return Q.nfcall(fs.emptyDir, repoPath);
                 })
                 .then(function() {
-                    return repo.getStatusExt().then(function(statuses) {
-                        if (statuses.length === 0) {
-                            return repo.checkoutBranch(branchName, {checkoutStrategy: NodeGit.Checkout.STRATEGY.FORCE});
+                    return NodeGit.Clone(url, repoPath);
+                });
+        })
+        .then(function() {
+            if (refName) {
+                return repo.getStatusExt()
+                    .then(function(statuses) {
+                        if (statuses.length !== 0) {
+                            throw new Error('Uncommitted changes prevent checking out new version.');
                         }
+                    })
+                    .then(function() {
+                        return repo.getReference(refName).then(function(ref) {
+                            return NodeGit.Checkout.tree(repo, ref, {checkoutStrategy: NodeGit.Checkout.STRATEGY.FORCE});
+                        });
                     });
-                })
-                .then(function() {
-                    return NodeGit.Submodule.reloadAll(repo, 1);
-                })
+            }
+        })
+        .then(function() {
+            return NodeGit.Submodule.reloadAll(repo, 1)
                 .then(function() {
                     return Q.nfcall(fs.readFile, path.join(repoPath, '.gitmodules'), 'utf-8')
                         .then(function(data) {
@@ -100,17 +104,6 @@ function checkoutRepo(name, repoPath, url, branchName) {
                         }, function() {
                             return;
                         });
-                })
-                .then(function() {
-                    return repo;
-                });
-        }, function() {
-            return Q.nfcall(fs.mkdirs, repoPath)
-                .then(function() {
-                    return Q.nfcall(fs.emptyDir, repoPath);
-                })
-                .then(function() {
-                    return NodeGit.Clone(url, repoPath, {checkoutBranch: branchName});
                 });
         })
         .catch(function(err) {
@@ -247,11 +240,11 @@ if (command !== 'run') {
         },
         'metamod': function() {
             console.log(chalk.cyan('Downloading the Metamod:Source source...'));
-            return checkoutRepo('Metamod:Source', path.resolve(argv.metamod), 'https://github.com/alliedmodders/metamod-source.git', argv.metamodBranch || 'master');
+            return checkoutRepo('Metamod:Source', path.resolve(argv.metamod), 'https://github.com/alliedmodders/metamod-source.git', argv.metamodCommit);
         },
         'sourcemod': function() {
             console.log(chalk.cyan('Downloading the SourceMod source...'));
-            return checkoutRepo('SourceMod', path.resolve(argv.sourcemod), 'https://github.com/alliedmodders/sourcemod.git', argv.sourcemodBranch || 'master');
+            return checkoutRepo('SourceMod', path.resolve(argv.sourcemod), 'https://github.com/alliedmodders/sourcemod.git', argv.sourcemodCommit);
         },
         'metamod-build': ['hl2sdk', 'metamod', function(results) {
             console.log(chalk.magenta('Building Metamod:Source with AMBuild...'));

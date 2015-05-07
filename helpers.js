@@ -63,7 +63,9 @@ exports.checkoutRepo = function(name, repoPath, url, refName) {
                     })
                     .then(function() {
                         return NodeGit.Reference.dwim(repo, refName)
-                            .catch(function() {
+                            .then(function(ref) {
+                                return repo.setHead(ref.name(), repo.defaultSignature(), 'Switched to ' + refName);
+                            }, function() {
                                 return repo.getRemotes().then(function(remotes) {
                                     var getBranch = [];
 
@@ -90,15 +92,14 @@ exports.checkoutRepo = function(name, repoPath, url, refName) {
 
                                         return foundBranch;
                                     });
-                                });
-                            })
-                            .then(function(ref) {
-                                return repo.setHead(ref.name(), repo.defaultSignature(), 'Switched to ' + refName);
-                            })
-                            .catch(function() {
-                                return NodeGit.Commit.lookup(repo, refName)
-                                    .then(function(commit) {
-                                        return repo.setHeadDetached(commit.id(), repo.defaultSignature(), 'Switched to ' + refName);
+                                })
+                                    .then(function(branch) {
+                                        return repo.setHead(ref.name(), repo.defaultSignature(), 'Switched to ' + refName);
+                                    }, function() {
+                                        return NodeGit.Commit.lookup(repo, refName)
+                                            .then(function(commit) {
+                                                return repo.setHeadDetached(commit.id(), repo.defaultSignature(), 'Switched to ' + refName);
+                                            });
                                     });
                             });
                     })

@@ -93,7 +93,9 @@ function checkoutRepo(name, repoPath, url, refName) {
             }
         })
         .then(function(repo) {
-            return NodeGit.Submodule.reloadAll(repo, 1)
+            return Q.fcall(function() {
+                NodeGit.Submodule.reloadAll(repo, 1)
+            })
                 .then(function() {
                     return Q.nfcall(fs.readFile, path.join(repoPath, '.gitmodules'), 'utf-8')
                         .then(function(data) {

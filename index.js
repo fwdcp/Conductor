@@ -2,7 +2,7 @@
 
 var async = require('async-q');
 var child_process = require('child_process');
-var clone = require('clone');
+var extend = require('extend');
 var fs = require('fs-extra');
 var NodeGit = require('nodegit');
 var path = require('path');
@@ -44,40 +44,92 @@ var argv = yargs
     .argv;
 
 function checkoutBranchOfRepo(path, url, branchName) {
-    return NodeGit.Repository.open(path).then(function(repo) {
-        return NodeGit.Remote.lookup(repo, 'origin').catch(function() {
-            return NodeGit.Remote.create(repo, 'origin', url);
-        }).then(function(remote) {
-            return remote.fetch(null, repo.defaultSignature(), null);
-        }).then(function() {
-            return NodeGit.Branch.lookup(repo, branchName, NodeGit.Branch.BRANCH.LOCAL).then(function() {
-                return repo.mergeBranches(branchName, 'origin/' + branchName);
-            }, function() {
-                return repo.getBranchCommit('origin/' + branchName).then(function(commit) {
-                    return repo.createBranch(branchName, commit, 0, repo.defaultSignature());
-                }).then(function(branch) {
-                    NodeGit.Branch.setUpstream(branch, 'origin/' + branchName);
-                    return NodeGit.Branch.lookup(repo, branchName, NodeGit.Branch.BRANCH.LOCAL);
+    return NodeGit.Repository.open(path)
+        .then(function(repo) {
+            return NodeGit.Remote.lookup(repo, 'origin').catch(function() {
+                return NodeGit.Remote.create(repo, 'origin', url);
+            })
+                .then(function(remote) {
+                    return remote.fetch(null, repo.defaultSignature(), null);
+                })
+                .then(function() {
+                    return NodeGit.Branch.lookup(repo, branchName, NodeGit.Branch.BRANCH.LOCAL)
+                        .then(function() {
+                            return repo.mergeBranches(branchName, 'origin/' + branchName);
+                        }, function() {
+                            return repo.getBranchCommit('origin/' + branchName).then(function(commit) {
+                                return repo.createBranch(branchName, commit, 0, repo.defaultSignature());
+                            }).then(function(branch) {
+                                NodeGit.Branch.setUpstream(branch, 'origin/' + branchName);
+                                return NodeGit.Branch.lookup(repo, branchName, NodeGit.Branch.BRANCH.LOCAL);
+                            });
+                        });
+                })
+                .then(function() {
+                    return repo.getStatusExt().then(function(statuses) {
+                        if (statuses.length == 0) {
+                            return repo.checkoutBranch(branchName, {checkoutStrategy: NodeGit.Checkout.STRATEGY.FORCE});
+                        }
+                    });
+                })
+                .then(function() {
+                    return repo;
                 });
+        }, function() {
+            return Q.nfcall(fs.mkdirs, path)
+                .then(function() {
+                    return Q.nfcall(fs.emptyDir, path);
+                })
+                .then(function() {
+                    return NodeGit.Clone(url, path, {checkoutBranch: branchName});
+                });
+        });
+}
+
+function ambuild(repo, extraArgs, extraEnv) {
+    var env = {}
+    extend(env, process.env, extraEnv);
+
+    return Q.nfcall(fs.mkdirs, path.join(repo, 'build'))
+        .then(function() {
+            var deferred = Q.defer();
+
+            var configure = child_process.spawn('python', [
+                path.join(repo, 'configure.py')
+            ].concat(extraArgs), {
+                cwd: path.join(repo, 'build'),
+                env: env
             });
-        }).then(function() {
-            return repo.getStatusExt().then(function(statuses) {
-                if (statuses.length == 0) {
-                    return repo.checkoutBranch(branchName, {checkoutStrategy: NodeGit.Checkout.STRATEGY.FORCE});
+
+            configure.on('exit', function(code, signal) {
+                if (signal || code) {
+                    deferred.reject(new Error(signal || code));
+                }
+                else {
+                    deferred.resolve();
                 }
             });
-        }).then(function() {
-            return repo;
-        });
-    }, function() {
-        return Q.nfcall(fs.mkdirs, path)
-            .then(function() {
-                return Q.nfcall(fs.emptyDir, path);
-            })
-            .then(function() {
-                return NodeGit.Clone(url, path, {checkoutBranch: branchName});
+
+            return deferred.promise;
+        })
+        .then(function() {
+            var deferred = Q.defer();
+
+            var configure = child_process.spawn('ambuild', {
+                cwd: path.join(repo, 'build')
             });
-    });
+
+            configure.on('exit', function(code, signal) {
+                if (signal || code) {
+                    deferred.reject(new Error(signal || code));
+                }
+                else {
+                    deferred.resolve();
+                }
+            });
+
+            return deferred.promise;
+        });
 }
 
 async.auto({
@@ -91,24 +143,6 @@ async.auto({
         return checkoutBranchOfRepo(path.resolve(argv.sourcemod), 'https://github.com/alliedmodders/sourcemod.git', argv.sourcemodBranch || 'master');
     },
     'metamod-build': ['hl2sdk', 'metamod', function(results) {
-        var metamodPath = path.resolve(argv.metamod);
-        var env = clone(process.env);
-        env['HL2SDKTF2'] = path.resolve(argv.hl2sdk);
-
-        return Q.nfcall(fs.mkdirs, path.join(metamodPath, 'build')).then(function() {
-            var configure = child_process.spawn('python', [
-                path.join(metamodPath, 'configure.py'),
-                '--sdks=tf2'
-            ], {
-                cwd: path.join(metamodPath, 'build'),
-                env: env
-            });
-
-            configure.stdout.pipe(process.stdout);
-
-            configure.on('exit', function(code, signal) {
-                console.log(code, signal);
-            });
-        });
+        return ambuild(path.resolve(argv.metamod), ['--sdks=tf2'], {'HL2SDKTF2': path.resolve(argv.hl2sdk)});
     }]
 }).done();

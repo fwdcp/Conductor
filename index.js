@@ -79,9 +79,13 @@ function checkoutRepo(name, repoPath, url, refName) {
                         }
                     })
                     .then(function() {
-                        return repo.getReference(refName).then(function(ref) {
-                            return NodeGit.Checkout.tree(repo, ref, {checkoutStrategy: NodeGit.Checkout.STRATEGY.FORCE});
-                        });
+                        return repo.getReference(refName)
+                            .catch(function() {
+                                return repo.getReference('origin/' + refName);
+                            })
+                            .then(function(ref) {
+                                return NodeGit.Checkout.tree(repo, ref, {checkoutStrategy: NodeGit.Checkout.STRATEGY.FORCE});
+                            });
                     })
                     .then(function() {
                         return repo;

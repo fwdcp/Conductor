@@ -93,9 +93,16 @@ exports.checkoutRepo = function(name, repoPath, url, refName) {
                                 })
                             })
                             .then(function(ref) {
-                                return NodeGit.Checkout.tree(repo, ref.target()).then(function() {
-                                    return repo.setHead(ref.name(), repo.defaultSignature(), 'Switched to ' + refName);
-                                });
+                                return repo.getCommit(ref.target())
+                                    .then(function(commit) {
+                                        return commit.getTree();
+                                    })
+                                    .then(function(tree) {
+                                        return NodeGit.Checkout.tree(repo, tree);
+                                    })
+                                    .then(function() {
+                                        return repo.setHead(ref.name(), repo.defaultSignature(), 'Switched to ' + refName);
+                                    });
                             })
                             .catch(function() {
                                 return NodeGit.Commit.lookup(repo, refName)

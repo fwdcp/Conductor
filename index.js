@@ -4,6 +4,7 @@ var async = require('async-q');
 var child_process = require('child_process');
 var extend = require('extend');
 var fs = require('fs-extra');
+var ini = require('ini');
 var NodeGit = require('nodegit');
 var path = require('path');
 var Q = require('q');
@@ -43,8 +44,8 @@ var argv = yargs
     .alias('h', 'help')
     .argv;
 
-function checkoutBranchOfRepo(path, url, branchName) {
-    return NodeGit.Repository.open(path)
+function checkoutBranchOfRepo(repoPath, url, branchName) {
+    return NodeGit.Repository.open(repoPath)
         .then(function(repo) {
             return NodeGit.Remote.lookup(repo, 'origin').catch(function() {
                 return NodeGit.Remote.create(repo, 'origin', url);
@@ -73,15 +74,36 @@ function checkoutBranchOfRepo(path, url, branchName) {
                     });
                 })
                 .then(function() {
+                    return NodeGit.Submodule.reloadAll(repo, 1);
+                });
+                .then(function() {
+                    return Q.nfcall(fs.read, path.join(repoPath, '.gitmodules', 'utf-8'))
+                        .then(function(data) {
+                            var submoduleConfig = ini.parse(data);
+
+                            return Promise.all(Object.keys(submoduleConfig).map(function(sectionName) {
+                                var match = /submodule \"(.+)\"/.match(sectionName);
+
+                                if (match && match[1]) {
+                                    return NodeGit.Submodule.lookup(repo, match[1]).then(function(submodule) {
+                                        return submodule.update(1, null);
+                                    });
+                                }
+                            }));
+                        }, function() {
+                            return;
+                        });
+                });
+                .then(function() {
                     return repo;
                 });
         }, function() {
-            return Q.nfcall(fs.mkdirs, path)
+            return Q.nfcall(fs.mkdirs, repoPath)
                 .then(function() {
-                    return Q.nfcall(fs.emptyDir, path);
+                    return Q.nfcall(fs.emptyDir, repoPath);
                 })
                 .then(function() {
-                    return NodeGit.Clone(url, path, {checkoutBranch: branchName});
+                    return NodeGit.Clone(url, repoPath, {checkoutBranch: branchName});
                 });
         });
 }

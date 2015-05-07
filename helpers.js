@@ -69,10 +69,43 @@ exports.checkoutRepo = function(name, repoPath, url, refName) {
                         }
                     })
                     .then(function() {
-                        return NodeGit.Reference.lookup(repo, refName)
+                        return repo.fetchAll(null);
+                    })
+                    .then(function() {
+                        return NodeGit.Reference.dwim(repo, refName)
+                            .catch(function() {
+                                return repo.getRemotes().then(function(remotes) {
+                                    var getBranch = [];
+
+                                    remotes.forEach(function(remote) {
+                                        if (remote.name()) {
+                                            getBranch.push(NodeGit.Reference.dwim(repo, remote.name() + '/' + refName).catch(function() {
+                                                return null;
+                                            }));
+                                        }
+                                    });
+
+                                    return Promise.all(getBranch).then(function(branches) {
+                                        var foundBranch = null;
+
+                                        branches.forEach(function(branch) {
+                                            if (branch && foundBranch) {
+                                                throw new Error('Multiple remotes had the branch.');
+                                            }
+                                        });
+
+                                        if (!foundBranch) {
+                                            throw new Error('No remote had the branch.');
+                                        }
+
+                                        return foundBranch;
+                                    });
+                                });
+                            })
                             .then(function(ref) {
                                 return repo.setHead(ref.name(), repo.defaultSignature(), 'Switched to ' + refName);
-                            }, function() {
+                            })
+                            .catch(function() {
                                 return NodeGit.Commit.lookup(repo, refName)
                                     .then(function(commit) {
                                         return repo.setHeadDetached(commit.id(), repo.defaultSignature(), 'Switched to ' + refName);

@@ -43,8 +43,12 @@ var argv = yargs
     .string('sourcemod-branch')
     .config('c')
     .alias('c', 'config')
+    .describe('verbose', 'print more information')
+    .alias('v', 'verbose')
+    .count('verbose')
     .help('h')
     .alias('h', 'help')
+    .version('0.1.0')
     .argv;
 
 function checkoutRepo(name, repoPath, url, branchName) {
@@ -128,7 +132,12 @@ function steamcmdUpdate(name, steamcmd, appid, username, password) {
             cwd: steamcmd
         });
 
-        update.stderr.pipe(process.stderr);
+        if (argv.verbose >= 2) {
+            update.stdout.pipe(process.stdout);
+        }
+        if (argv.verbose >= 1) {
+            update.stderr.pipe(process.stderr);
+        }
 
         update.on('exit', function(code, signal) {
             if (signal) {
@@ -166,7 +175,12 @@ function ambuild(name, repo, extraArgs, extraEnv) {
                 env: env
             });
 
-            configure.stderr.pipe(process.stderr);
+            if (argv.verbose >= 2) {
+                configure.stdout.pipe(process.stdout);
+            }
+            if (argv.verbose >= 1) {
+                configure.stderr.pipe(process.stderr);
+            }
 
             configure.on('exit', function(code, signal) {
                 if (signal) {
@@ -189,7 +203,12 @@ function ambuild(name, repo, extraArgs, extraEnv) {
                 cwd: path.join(repo, 'build')
             });
 
-            build.stderr.pipe(process.stderr);
+            if (argv.verbose >= 2) {
+                build.stdout.pipe(process.stdout);
+            }
+            if (argv.verbose >= 1) {
+                build.stderr.pipe(process.stderr);
+            }
 
             build.on('exit', function(code, signal) {
                 if (signal) {

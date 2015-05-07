@@ -70,11 +70,9 @@ exports.checkoutRepo = function(name, repoPath, url, refName) {
                                     var getBranch = [];
 
                                     remotes.forEach(function(remote) {
-                                        if (remote.name()) {
-                                            getBranch.push(NodeGit.Reference.dwim(repo, remote.name() + '/' + refName).catch(function() {
-                                                return null;
-                                            }));
-                                        }
+                                        getBranch.push(NodeGit.Reference.dwim(repo, remote + '/' + refName).catch(function() {
+                                            return null;
+                                        }));
                                     });
 
                                     return Promise.all(getBranch).then(function(branches) {

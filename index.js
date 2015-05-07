@@ -1,6 +1,7 @@
 #! /usr/bin/env node
 
 var async = require('async-q');
+var child_process = require('child_process');
 var fs = require('fs-extra');
 var NodeGit = require('nodegit');
 var path = require('path');
@@ -80,15 +81,30 @@ function checkoutBranchOfRepo(path, url, branchName) {
 
 async.auto({
     'hl2sdk': function() {
-        return checkoutBranchOfRepo(path.resolve(argv.hl2sdk), 'https://github.com/alliedmodders/hl2sdk.git', 'tf2')
+        return checkoutBranchOfRepo(path.resolve(argv.hl2sdk), 'https://github.com/alliedmodders/hl2sdk.git', 'tf2');
     },
     'metamod': function() {
-        return checkoutBranchOfRepo(path.resolve(argv.metamod), 'https://github.com/alliedmodders/metamod-source.git', argv.metamodBranch || 'master')
+        return checkoutBranchOfRepo(path.resolve(argv.metamod), 'https://github.com/alliedmodders/metamod-source.git', argv.metamodBranch || 'master');
     },
     'sourcemod': function() {
-        return checkoutBranchOfRepo(path.resolve(argv.sourcemod), 'https://github.com/alliedmodders/sourcemod.git', argv.sourcemodBranch || 'master')
+        return checkoutBranchOfRepo(path.resolve(argv.sourcemod), 'https://github.com/alliedmodders/sourcemod.git', argv.sourcemodBranch || 'master');
     },
     'metamod-build': ['hl2sdk', 'metamod', function(results) {
-        console.log(arguments);
+        var metamodPath = path.resolve(argv.metamod);
+        fs.mkdirs(path.join(metamodPath, 'build'), function(err) {
+            if (err) {
+                throw err;
+            }
+
+            var configure = child_process.spawn('python', [path.join(metamodPath, 'configure.py')], {
+                cwd: path.join(metamodPath, 'build');
+            });
+
+            configure.stdout.pipe(process.stdout);
+
+            configure.on('exit', function(code, signal) {
+                console.log(code, signal);
+            });
+        });
     }]
 }).done();

@@ -82,7 +82,7 @@ function checkoutBranchOfRepo(repoPath, url, branchName) {
                             var submoduleConfig = ini.parse(data);
 
                             return Promise.all(Object.keys(submoduleConfig).map(function(sectionName) {
-                                var match = /submodule \"(.+)\"/.match(sectionName);
+                                var match = /submodule \"(.+)\"/.exec(sectionName);
 
                                 if (match && match[1]) {
                                     return NodeGit.Submodule.lookup(repo, match[1]).then(function(submodule) {

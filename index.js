@@ -79,12 +79,12 @@ function checkoutRepo(name, repoPath, url, refName) {
                         }
                     })
                     .then(function() {
-                        return repo.getReference(refName)
+                        return repo.getReferenceCommit(refName)
                             .catch(function() {
-                                return repo.getReference('origin/' + refName);
+                                return repo.getReferenceCommit('origin/' + refName);
                             })
-                            .then(function(ref) {
-                                return NodeGit.Checkout.tree(repo, ref, {checkoutStrategy: NodeGit.Checkout.STRATEGY.FORCE});
+                            .then(function(commit) {
+                                return NodeGit.Checkout.tree(repo, commit, {checkoutStrategy: NodeGit.Checkout.STRATEGY.FORCE});
                             });
                     })
                     .then(function() {

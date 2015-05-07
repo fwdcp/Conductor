@@ -41,17 +41,7 @@ exports.steamcmdUpdate = function(name, steamcmd, appid, username, password) {
 
 exports.checkoutRepo = function(name, repoPath, url, refName) {
     return NodeGit.Repository.open(repoPath)
-        .then(function(repo) {
-            return NodeGit.Remote.lookup(repo, 'origin').catch(function() {
-                return NodeGit.Remote.create(repo, 'origin', url);
-            })
-                .then(function(remote) {
-                    return remote.fetch(null, repo.defaultSignature(), null);
-                })
-                .then(function() {
-                    return repo;
-                });
-        }, function() {
+        .catch(function() {
             return Q.nfcall(fs.mkdirs, repoPath)
                 .then(function() {
                     return Q.nfcall(fs.emptyDir, repoPath);

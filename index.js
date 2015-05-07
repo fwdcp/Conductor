@@ -59,14 +59,8 @@ function checkoutBranchOfRepo(path, url, branchName) {
                 });
             });
         }).then(function() {
-            return repo.index().then(function(index) {
-                if (index.entryCount() == 0) {
-                    return NodeGit.Diff.indexToWorkdir(repo, index).then(function(diff) {
-                        if (diff.numDeltas() == 0) {
-                            return repo.checkoutBranch(branchName, {checkoutStrategy: NodeGit.Checkout.STRATEGY.FORCE});
-                        }
-                    });
-                }
+            if (repo.getStatusExt().length == 0) {
+                return repo.checkoutBranch(branchName, {checkoutStrategy: NodeGit.Checkout.STRATEGY.FORCE});
             }).then(function() {
                 return repo;
             });

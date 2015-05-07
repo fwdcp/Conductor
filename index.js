@@ -61,9 +61,9 @@ function checkoutBranchOfRepo(path, url, branchName) {
         }).then(function() {
             if (repo.getStatusExt().length == 0) {
                 return repo.checkoutBranch(branchName, {checkoutStrategy: NodeGit.Checkout.STRATEGY.FORCE});
-            }).then(function() {
-                return repo;
-            });
+            }
+        }).then(function() {
+            return repo;
         });
     }, function() {
         return Q.nfcall(fs.mkdirs, path)

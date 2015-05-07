@@ -144,5 +144,8 @@ async.auto({
     },
     'metamod-build': ['hl2sdk', 'metamod', function(results) {
         return ambuild(path.resolve(argv.metamod), ['--sdks=tf2'], {'HL2SDKTF2': path.resolve(argv.hl2sdk)});
+    }],
+    'sourcemod-build': ['hl2sdk', 'metamod', 'sourcemod', function(results) {
+        return ambuild(path.resolve(argv.sourcemod), ['--sdks=tf2', '--no-mysql'], {'HL2SDKTF2': path.resolve(argv.hl2sdk), 'MMSOURCE_DEV': path.resolve(argv.metamod)});
     }]
 }).done();

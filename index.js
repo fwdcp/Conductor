@@ -77,7 +77,7 @@ function checkoutBranchOfRepo(repoPath, url, branchName) {
                     return NodeGit.Submodule.reloadAll(repo, 1);
                 })
                 .then(function() {
-                    return Q.nfcall(fs.read, path.join(repoPath, '.gitmodules'), 'utf-8')
+                    return Q.nfcall(fs.readFile, path.join(repoPath, '.gitmodules'), 'utf-8')
                         .then(function(data) {
                             var submoduleConfig = ini.parse(data);
 

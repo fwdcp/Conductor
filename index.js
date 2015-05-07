@@ -52,9 +52,9 @@ function checkoutBranchOfRepo(path, url, branchName) {
                 return repo.mergeBranches(branchName, 'origin/' + branchName);
             }, function() {
                 return repo.getBranchCommit('origin/' + branchName).then(function(commit) {
-                    return NodeGit.Branch.create(repo, branchName, commit, true, NodeGit.Signature.default(repo));
+                    return repo.createBranch(branchName, commit, 0, repo.defaultSignature());
                 }).then(function() {
-                    branch.setUpstream(branchName, 'origin');
+                    NodeGit.Branch.setUpstream(branchName, 'origin/' + branchName);
                     return NodeGit.Branch.lookup(repo, branchName, NodeGit.Branch.BRANCH.LOCAL);
                 });
             });

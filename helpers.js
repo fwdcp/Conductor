@@ -75,25 +75,25 @@ exports.checkoutRepo = function(name, repoPath, url, refName) {
                                         }));
                                     });
 
-                                    return Promise.all(getBranch).then(function(branches) {
-                                        var foundBranch = null;
+                                    return Promise.all(getBranch).then(function(refs) {
+                                        var branch = null;
 
-                                        branches.forEach(function(branch) {
-                                            if (branch && foundBranch) {
+                                        refs.forEach(function(ref) {
+                                            if (ref && branch) {
                                                 throw new Error('Multiple remotes had the branch.');
                                             }
 
-                                            foundBranch = branch;
+                                            branch = ref;
                                         });
 
-                                        if (!foundBranch) {
+                                        if (!branch) {
                                             throw new Error('No remote had the branch.');
                                         }
 
-                                        return foundBranch;
+                                        return branch;
                                     });
                                 })
-                                    .then(function(branch) {
+                                    .then(function(ref) {
                                         return repo.setHead(ref.name(), repo.defaultSignature(), 'Switched to ' + refName);
                                     }, function() {
                                         return NodeGit.Commit.lookup(repo, refName)

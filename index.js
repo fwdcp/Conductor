@@ -2,6 +2,7 @@
 
 var async = require('async-q');
 var child_process = require('child_process');
+var clone = require('clone');
 var fs = require('fs-extra');
 var NodeGit = require('nodegit');
 var path = require('path');
@@ -91,15 +92,10 @@ async.auto({
     },
     'metamod-build': ['hl2sdk', 'metamod', function(results) {
         var metamodPath = path.resolve(argv.metamod);
-        var env = {};
-        Object.assign(env, process.env);
+        var env = clone(process.env);
         env['HL2SDKTF2'] = path.resolve(argv.hl2sdk);
 
-        fs.mkdirs(path.join(metamodPath, 'build'), function(err) {
-            if (err) {
-                throw err;
-            }
-
+        return Q.nfcall(fs.mkdirs, path.join(metamodPath, 'build')).then(function() {
             var configure = child_process.spawn('python', [
                 path.join(metamodPath, 'configure.py'),
                 '--sdks=tf2'

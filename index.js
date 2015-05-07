@@ -64,7 +64,7 @@ async.auto({
                     return Q.nfcall(fs.emptyDir, metamod);
                 })
                 .then(function() {
-                    return NodeGit.Clone('https://github.com/alliedmodders/metamod-source.git', metamod, {checkoutBranch: argv.metamod-branch || 'master'});
+                    return NodeGit.Clone('https://github.com/alliedmodders/metamod-source.git', metamod, {checkoutBranch: argv.metamodBranch || 'master'});
                 });
         });
     },
@@ -75,7 +75,7 @@ async.auto({
                     return Q.nfcall(fs.emptyDir, sourcemod);
                 })
                 .then(function() {
-                    return NodeGit.Clone('https://github.com/alliedmodders/sourcemod.git', sourcemod, {checkoutBranch: argv.sourcemod-branch || 'master'});
+                    return NodeGit.Clone('https://github.com/alliedmodders/sourcemod.git', sourcemod, {checkoutBranch: argv.sourcemodBranch || 'master'});
                 });
         });
     },

@@ -63,9 +63,7 @@ exports.checkoutRepo = function(name, repoPath, url, refName) {
                     })
                     .then(function() {
                         return NodeGit.Reference.dwim(repo, refName)
-                            .then(function(ref) {
-                                return repo.setHead(ref.name(), repo.defaultSignature(), 'Switched to ' + refName);
-                            }, function() {
+                            .catch(function() {
                                 return repo.getRemotes().then(function(remotes) {
                                     var getBranch = [];
 
@@ -93,15 +91,20 @@ exports.checkoutRepo = function(name, repoPath, url, refName) {
                                         return branch;
                                     });
                                 })
-                                    .then(function(ref) {
-                                        return repo.setHead(ref.name(), repo.defaultSignature(), 'Switched to ' + refName);
-                                    }, function() {
-                                        return NodeGit.Commit.lookup(repo, refName)
-                                            .then(function(commit) {
-                                                return repo.setHeadDetached(commit.id(), repo.defaultSignature(), 'Switched to ' + refName);
-                                            });
+                            })
+                            .then(function(ref) {
+                                return NodeGit.Checkout.tree(repo, ref).then(function() {
+                                    return repo.setHead(ref.name(), repo.defaultSignature(), 'Switched to ' + refName);
+                                });
+                            })
+                            .catch(function() {
+                                return NodeGit.Commit.lookup(repo, refName)
+                                    .then(function(commit) {
+                                        return NodeGit.Checkout.tree(repo, commit).then(function() {
+                                            return repo.setHeadDetached(commit.id(), repo.defaultSignature(), 'Switched to ' + refName);
+                                        });
                                     });
-                            });
+                            })
                     })
                     .then(function() {
                         return NodeGit.Checkout.head(repo, {checkoutStrategy: NodeGit.Checkout.STRATEGY.FORCE});

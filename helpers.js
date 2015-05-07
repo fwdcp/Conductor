@@ -69,7 +69,7 @@ exports.checkoutRepo = function(name, repoPath, url, refName) {
                         }
                     })
                     .then(function() {
-                        return repo.fetchAll(null);
+                        return repo.fetchAll({});
                     })
                     .then(function() {
                         return NodeGit.Reference.dwim(repo, refName)

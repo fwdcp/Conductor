@@ -148,6 +148,20 @@ async.auto({
     'sourcemod': function() {
         return checkoutBranchOfRepo(path.resolve(argv.sourcemod), 'https://github.com/alliedmodders/sourcemod.git', argv.sourcemodBranch || 'master');
     },
+    'sourcepawn': ['sourcemod', function(results) {
+        return NodeGit.Submodule.lookup(results.sourcemod, 'sourcepawn').then(function(submodule) {
+            return submodule.update(1);
+        }, function() {
+            return;
+        });
+    }],
+    'amtl': ['sourcemod', function(results) {
+        return NodeGit.Submodule.lookup(results.sourcemod, 'public/amtl').then(function(submodule) {
+            return submodule.update(1);
+        }, function() {
+            return;
+        });
+    }],
     'metamod-build': ['hl2sdk', 'metamod', function(results) {
         return ambuild(path.resolve(argv.metamod), ['--sdks=tf2'], {'HL2SDKTF2': path.resolve(argv.hl2sdk)});
     }],

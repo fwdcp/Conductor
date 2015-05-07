@@ -82,6 +82,8 @@ exports.checkoutRepo = function(name, repoPath, url, refName) {
                                             if (branch && foundBranch) {
                                                 throw new Error('Multiple remotes had the branch.');
                                             }
+
+                                            foundBranch = branch;
                                         });
 
                                         if (!foundBranch) {

@@ -283,7 +283,7 @@ exports.ambuild = function(repo, extraArgs, extraEnv) {
 };
 
 exports.mirror = function(src, dest, link, force) {
-    return Q.nfcall(fs.mkdirs, repoPath)
+    return Q.nfcall(fs.mkdirs, dest)
         .then(function() {
             return Q.nfcall(glob, path.join(src, '*'));
         })

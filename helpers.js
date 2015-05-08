@@ -10,6 +10,8 @@ var Q = require('q');
 module.exports = function(logger) {
     return {
         steamcmdUpdate: function(name, steamcmd, appid, username, password) {
+            logger.log('verbose', '[' + name + '] Starting SteamCMD...');
+
             var deferred = Q.defer();
 
             var update = child_process.spawn('./steamcmd.sh', [
@@ -21,10 +23,10 @@ module.exports = function(logger) {
             });
 
             update.stdout.on('data', function(out) {
-                logger.log('debug', '[' + name + ' - SteamCMD]' + out);
+                logger.log('debug', '[' + name + ' - SteamCMD] ' + out);
             });
             update.stderr.on('data', function(out) {
-                logger.log('warn', '[' + name + ' - SteamCMD]' + out);
+                logger.log('warn', '[' + name + ' - SteamCMD] ' + out);
             });
 
             update.on('exit', function(code, signal) {
@@ -44,6 +46,7 @@ module.exports = function(logger) {
         checkoutRepo: function(name, repoPath, url, checkout) {
             return NodeGit.Repository.open(repoPath)
                 .catch(function() {
+                    logger.log('verbose', '[' + name + '] Cloning repository...');
                     return Q.nfcall(fs.mkdirs, repoPath)
                         .then(function() {
                             return Q.nfcall(fs.emptyDir, repoPath);
@@ -58,10 +61,16 @@ module.exports = function(logger) {
                             throw new Error('Uncommitted changes prevent checking out new version.');
                         }
 
+                        logger.log('verbose', '[' + name + '] Fetching all remotes...');
+
                         return repo.fetchAll({})
                             .then(function() {
+                                logger.log('verbose', '[' + name + '] Looking up reference name...');
+
                                 return NodeGit.Reference.dwim(repo, checkout)
                                     .catch(function() {
+                                        logger.log('verbose', '[' + name + '] Local reference not found. Looking up remote branches...');
+
                                         return repo.getRemotes().then(function(remotes) {
                                             var getBranch = [];
 
@@ -92,6 +101,10 @@ module.exports = function(logger) {
                                                     return foundBranch;
                                                 })
                                                 .then(function(remoteBranch) {
+                                                    logger.log('verbose', '[' + name + '] Found remote branch ' + remoteBranch.remote + '/' + refName + '.');
+
+                                                    logger.log('verbose', '[' + name + '] Checking out remote branch locally...');
+
                                                     return repo.getCommit(remoteBranch.ref.target())
                                                         .then(function(commit) {
                                                             return NodeGit.Branch.create(repo, checkout, commit, 0, repo.defaultSignature(), null);
@@ -113,6 +126,8 @@ module.exports = function(logger) {
                                         return ref.resolve()
                                             .then(function(ref) {
                                                 if (ref.isTag()) {
+                                                    logger.log('verbose', '[' + name + '] Checking out tag...');
+
                                                     return repo.getTag(ref.target())
                                                         .then(function(tag) {
                                                             return repo.getCommit(tag.targetId())
@@ -134,10 +149,14 @@ module.exports = function(logger) {
                                                         var upstreamMatch = /refs\/remotes\/(.+)/.exec(NodeGit.Branch.upstream(ref).name());
 
                                                         if (localMatch && localMatch[1] && upstreamMatch && upstreamMatch[1]) {
+                                                            logger.log('verbose', '[' + name + '] Merging upstream branch' + upstreamMatch[1] + ' into local branch ' + localMatch[1] + '...');
+
                                                             return repo.mergeBranches(localMatch[1], upstreamMatch[1]);
                                                         }
                                                     })
                                                         .done(function() {
+                                                            logger.log('verbose', '[' + name + '] Checking out branch...');
+
                                                             var match = /refs\/heads\/(.+)/.exec(ref.name());
 
                                                             if (match && match[1]) {
@@ -159,8 +178,13 @@ module.exports = function(logger) {
                                                 }
                                             });
                                     }, function() {
+                                        logger.log('verbose', '[' + name + '] No valid reference found. Searching commits...');
+
                                         return NodeGit.Commit.lookupPrefix(repo, NodeGit.Oid.fromString((checkout + '0000000000000000000000000000000000000000').slice(0, 40)), checkout.length)
                                             .then(function(commit) {
+                                                logger.log('verbose', '[' + name + '] Found valid commit ' + commit.id() + '.');
+                                                logger.log('verbose', '[' + name + '] Checking out tag...');
+
                                                 return NodeGit.Checkout.tree(repo, commit, {checkoutStrategy: NodeGit.Checkout.STRATEGY.SAFE_CREATE}).then(function() {
                                                     return repo.setHeadDetached(commit.id(), repo.defaultSignature(), 'Switched to ' + checkout);
                                                 });
@@ -176,6 +200,8 @@ module.exports = function(logger) {
                 })
                 .then(function(repo) {
                     return Q.fcall(function() {
+                        logger.log('verbose', '[' + name + '] Reloading submodule info...');
+
                         return NodeGit.Submodule.reloadAll(repo, 1);
                     })
                         .then(function() {
@@ -202,6 +228,8 @@ module.exports = function(logger) {
 
                             // for some reason this has an issue if not delayed
                             setTimeout(function() {
+                                logger.log('verbose', '[' + name + '] Updating submodules...');
+
                                 var submoduleUpdate = child_process.spawn('git', [
                                     'submodule', 'update',
                                     '--init', '--recursive'
@@ -210,10 +238,10 @@ module.exports = function(logger) {
                                 });
 
                                 submoduleUpdate.stdout.on('data', function(out) {
-                                    logger.log('debug', '[' + name + ' - Git submodule update]' + out);
+                                    logger.log('debug', '[' + name + ' - Git submodule update] ' + out);
                                 });
                                 submoduleUpdate.stderr.on('data', function(out) {
-                                    logger.log('warn', '[' + name + ' - Git submodule update]' + out);
+                                    logger.log('warn', '[' + name + ' - Git submodule update] ' + out);
                                 });
 
                                 submoduleUpdate.on('exit', function(code, signal) {
@@ -227,7 +255,7 @@ module.exports = function(logger) {
                                         deferred.resolve();
                                     }
                                 });
-                            }, 5000);
+                            }, 1000);
 
                             return deferred.promise;
                         });
@@ -239,6 +267,8 @@ module.exports = function(logger) {
 
             return Q.nfcall(fs.mkdirs, path.join(repo, 'build'))
                 .then(function() {
+                    logger.log('verbose', '[' + name + '] Auto-configuring build...');
+
                     var deferred = Q.defer();
 
                     var configure = child_process.spawn('python', [
@@ -249,10 +279,10 @@ module.exports = function(logger) {
                     });
 
                     configure.stdout.on('data', function(out) {
-                        logger.log('debug', '[' + name + ' - Configure]' + out);
+                        logger.log('debug', '[' + name + ' - Configure] ' + out);
                     });
                     configure.stderr.on('data', function(out) {
-                        logger.log('warn', '[' + name + ' - Configure]' + out);
+                        logger.log('warn', '[' + name + ' - Configure] ' + out);
                     });
 
                     configure.on('exit', function(code, signal) {
@@ -270,6 +300,8 @@ module.exports = function(logger) {
                     return deferred.promise;
                 })
                 .then(function() {
+                    logger.log('verbose', '[' + name + '] Building...');
+
                     var deferred = Q.defer();
 
                     var build = child_process.spawn('ambuild', {
@@ -277,10 +309,10 @@ module.exports = function(logger) {
                     });
 
                     build.stdout.on('data', function(out) {
-                        logger.log('debug', '[' + name + ' - Build]' + out);
+                        logger.log('debug', '[' + name + ' - Build] ' + out);
                     });
                     build.stderr.on('data', function(out) {
-                        logger.log('warn', '[' + name + ' - Build]' + out);
+                        logger.log('warn', '[' + name + ' - Build] ' + out);
                     });
 
                     build.on('exit', function(code, signal) {
@@ -301,10 +333,14 @@ module.exports = function(logger) {
         mirrorLink: function(name, src, dest, force) {
             return Q.nfcall(fs.mkdirs, dest)
                 .then(function() {
+                    logger.log('verbose', '[' + name + '] Calculating glob for source...');
+
                     return Q.nfcall(glob, path.join(src, '*'));
                 })
                 .then(function(matches) {
                     if (matches && matches.length >= 0) {
+                        logger.log('verbose', '[' + name + '] Linking files...');
+
                         var deferred = Q.defer();
 
                         var copy = child_process.spawn('cp', matches.concat([
@@ -314,10 +350,10 @@ module.exports = function(logger) {
                         ], force ? ['--remove-destination'] : ['-n']));
 
                         copy.stdout.on('data', function(out) {
-                            logger.log('debug', '[' + name + ' - Copy]' + out);
+                            logger.log('debug', '[' + name + ' - Copy] ' + out);
                         });
                         copy.stderr.on('data', function(out) {
-                            logger.log('warn', '[' + name + ' - Copy]' + out);
+                            logger.log('warn', '[' + name + ' - Copy] ' + out);
                         });
 
                         copy.on('exit', function(code, signal) {
@@ -339,6 +375,8 @@ module.exports = function(logger) {
         mirror: function(name, src, dest, recursive, existingOnly) {
             return Q.nfcall(fs.mkdirs, dest)
                 .then(function() {
+                    logger.log('verbose', '[' + name + '] Syncing files...');
+
                     var deferred = Q.defer();
 
                     var sync = child_process.spawn('rsync', [
@@ -347,10 +385,10 @@ module.exports = function(logger) {
                     ].concat(recursive ? ['-r'] : [], existingOnly ? ['--existing'] : []));
 
                     sync.stdout.on('data', function(out) {
-                        logger.log('debug', '[' + name + ' - Sync]' + out);
+                        logger.log('debug', '[' + name + ' - Sync] ' + out);
                     });
                     sync.stderr.on('data', function(out) {
-                        logger.log('warn', '[' + name + ' - Sync]' + out);
+                        logger.log('warn', '[' + name + ' - Sync] ' + out);
                     });
 
                     sync.on('exit', function(code, signal) {

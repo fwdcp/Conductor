@@ -34,11 +34,6 @@ exports.steamcmdUpdate = function(name, steamcmd, appid, username, password) {
         });
 
         return deferred.promise;
-    })
-    .catch(function(err) {
-        if (err) {
-            throw new Error('When updating ' + name + ': ' + err);
-        }
     });
 };
 
@@ -226,11 +221,6 @@ exports.checkoutRepo = function(name, repoPath, url, refName) {
                 //             return;
                 //         });
                 // });
-        })
-        .catch(function(err) {
-            if (err) {
-                throw new Error('When downloading ' + name + ': ' + err);
-            }
         });
 };
 
@@ -287,10 +277,5 @@ exports.ambuild = function(name, repo, extraArgs, extraEnv) {
             });
 
             return deferred.promise;
-        })
-        .catch(function(err) {
-            if (err) {
-                throw new Error('When building ' + name + ': ' + err);
-            }
         });
 };

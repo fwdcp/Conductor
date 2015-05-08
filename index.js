@@ -83,7 +83,7 @@ if (command === 'install') {
     async.auto(tasks).catch(function(err) {
         if (err) {
             console.log(chalk.bgRed('Error encountered when installing:'));
-            console.log(chalk.bgRed(err));
+            console.log(chalk.bgRed(err.trace));
         }
     }).done();
 }
@@ -91,7 +91,7 @@ else if (command === 'update') {
     async.auto(tasks).catch(function(err) {
         if (err) {
             console.log(chalk.bgRed('Error encountered when updating:'));
-            console.log(chalk.bgRed(err));
+            console.log(chalk.bgRed(err.trace));
         }
     }).done();
 }
@@ -99,7 +99,7 @@ else if (command === 'run') {
     async.auto(tasks).catch(function(err) {
         if (err) {
             console.log(chalk.bgRed('Error encountered when updating:'));
-            console.log(chalk.bgRed(err));
+            console.log(chalk.bgRed(err.trace));
         }
     }).done();
 }
@@ -107,7 +107,7 @@ else if (command === 'run-updated') {
     async.auto(tasks).catch(function(err) {
         if (err) {
             console.log(chalk.bgRed('Error encountered when updating:'));
-            console.log(chalk.bgRed(err));
+            console.log(chalk.bgRed(err.trace));
         }
     }).done();
 }

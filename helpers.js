@@ -20,7 +20,12 @@ module.exports = function(logger) {
                 cwd: steamcmd
             });
 
-            update.stderr.pipe(process.stderr);
+            update.stdout.on('data', function(out) {
+                logger.log('debug', '[' + name + ' - SteamCMD]' + out);
+            });
+            update.stderr.on('data', function(out) {
+                logger.log('warn', '[' + name + ' - SteamCMD]' + out);
+            });
 
             update.on('exit', function(code, signal) {
                 if (signal) {
@@ -208,7 +213,12 @@ module.exports = function(logger) {
                                     cwd: repoPath
                                 });
 
-                                submoduleUpdate.stderr.pipe(process.stderr);
+                                submoduleUpdate.stdout.on('data', function(out) {
+                                    logger.log('debug', '[' + name + ' - Git submodule update]' + out);
+                                });
+                                submoduleUpdate.stderr.on('data', function(out) {
+                                    logger.log('warn', '[' + name + ' - Git submodule update]' + out);
+                                });
 
                                 submoduleUpdate.on('exit', function(code, signal) {
                                     if (signal) {
@@ -242,7 +252,12 @@ module.exports = function(logger) {
                         env: env
                     });
 
-                    configure.stderr.pipe(process.stderr);
+                    configure.stdout.on('data', function(out) {
+                        logger.log('debug', '[' + name + ' - Configure]' + out);
+                    });
+                    configure.stderr.on('data', function(out) {
+                        logger.log('warn', '[' + name + ' - Configure]' + out);
+                    });
 
                     configure.on('exit', function(code, signal) {
                         if (signal) {
@@ -265,7 +280,12 @@ module.exports = function(logger) {
                         cwd: path.join(repo, 'build')
                     });
 
-                    build.stderr.pipe(process.stderr);
+                    build.stdout.on('data', function(out) {
+                        logger.log('debug', '[' + name + ' - Build]' + out);
+                    });
+                    build.stderr.on('data', function(out) {
+                        logger.log('warn', '[' + name + ' - Build]' + out);
+                    });
 
                     build.on('exit', function(code, signal) {
                         if (signal) {
@@ -297,7 +317,12 @@ module.exports = function(logger) {
                             '-s'
                         ], force ? ['--remove-destination'] : ['-n']));
 
-                        copy.stderr.pipe(process.stderr);
+                        copy.stdout.on('data', function(out) {
+                            logger.log('debug', '[' + name + ' - Copy]' + out);
+                        });
+                        copy.stderr.on('data', function(out) {
+                            logger.log('warn', '[' + name + ' - Copy]' + out);
+                        });
 
                         copy.on('exit', function(code, signal) {
                             if (signal) {
@@ -325,7 +350,12 @@ module.exports = function(logger) {
                         dest
                     ].concat(recursive ? ['-r'] : [], existingOnly ? ['--existing'] : []));
 
-                    sync.stderr.pipe(process.stderr);
+                    sync.stdout.on('data', function(out) {
+                        logger.log('debug', '[' + name + ' - Sync]' + out);
+                    });
+                    sync.stderr.on('data', function(out) {
+                        logger.log('warn', '[' + name + ' - Sync]' + out);
+                    });
 
                     sync.on('exit', function(code, signal) {
                         if (signal) {

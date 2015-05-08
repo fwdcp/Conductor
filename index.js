@@ -54,27 +54,27 @@ var serverPath = path.resolve(argv._[1]);
 
 if (command !== 'run') {
     extend(tasks, {
-        'srcds': function() {
+        'srcds-download': function() {
             console.log(chalk.cyan('Downloading the dedicated server for TF2...'));
             return helpers.steamcmdUpdate(path.resolve(argv.steamcmd), 232250, 'anonymous', '');
         },
-        'hl2sdk': function() {
+        'hl2sdk-download': function() {
             console.log(chalk.cyan('Downloading the HL2SDK for TF2...'));
             return helpers.checkoutRepo(path.resolve(argv.hl2sdk), 'https://github.com/alliedmodders/hl2sdk.git', 'tf2');
         },
-        'metamod': function() {
+        'metamod-download': function() {
             console.log(chalk.cyan('Downloading the Metamod:Source source...'));
             return helpers.checkoutRepo(path.resolve(argv.metamod), 'https://github.com/alliedmodders/metamod-source.git', argv.metamodCommit);
         },
-        'sourcemod': function() {
+        'sourcemod-download': function() {
             console.log(chalk.cyan('Downloading the SourceMod source...'));
             return helpers.checkoutRepo(path.resolve(argv.sourcemod), 'https://github.com/alliedmodders/sourcemod.git', argv.sourcemodCommit);
         },
-        'metamod-build': ['hl2sdk', 'metamod', function() {
+        'metamod-build': ['hl2sdk-download', 'metamod-download', function() {
             console.log(chalk.magenta('Building Metamod:Source with AMBuild...'));
             return helpers.ambuild(path.resolve(argv.metamod), ['--sdks=tf2'], {'HL2SDKTF2': path.resolve(argv.hl2sdk)});
         }],
-        'sourcemod-build': ['hl2sdk', 'metamod', 'sourcemod', function() {
+        'sourcemod-build': ['hl2sdk-download', 'metamod-download', 'sourcemod-download', function() {
             console.log(chalk.magenta('Building SourceMod with AMBuild...'));
             return helpers.ambuild(path.resolve(argv.sourcemod), ['--sdks=tf2', '--no-mysql'], {'HL2SDKTF2': path.resolve(argv.hl2sdk), 'MMSOURCE_DEV': path.resolve(argv.metamod)});
         }]
@@ -83,15 +83,15 @@ if (command !== 'run') {
 
 if (command === 'install') {
     extend(tasks, {
-        'srcds-link': ['srcds', function() {
+        'srcds-link': ['srcds-download', function() {
             console.log(chalk.gray('Linking SRCDS files...'));
             return helpers.mirrorLink(path.join(path.resolve(argv.steamcmd), 'steamapps', 'common', 'Team Fortress 2 Dedicated Server'), serverPath);
         }],
-        'metamod-copy': ['srcds-link', function() {
+        'metamod-copy': ['metamod-build', 'srcds-link', function() {
             console.log(chalk.gray('Copying Metamod:Source package...'));
             return helpers.mirrorLink(path.join(path.resolve(argv.metamod), 'build', 'package'), serverPath);
         }],
-        'sourcemod-copy': ['srcds-link', function() {
+        'sourcemod-copy': ['sourcemod-build', 'metamod-copy', function() {
             console.log(chalk.gray('Copying SourceMod package...'));
             return helpers.mirrorLink(path.join(path.resolve(argv.sourcemod), 'build', 'package'), serverPath);
         }]

@@ -47,16 +47,16 @@ var argv = yargs
     .argv;
 
 if (argv.verbose == 0) {
-    winston.transports.console.level = 'info';
+    winston.level = 'info';
 }
 else if (argv.verbose == 1) {
-    winston.transports.console.level = 'verbose';
+    winston.level = 'verbose';
 }
 else if (argv.verbose == 2) {
-    winston.transports.console.level = 'debug';
+    winston.level = 'debug';
 }
 else if (argv.verbose == 3) {
-    winston.transports.console.level = 'silly';
+    winston.level = 'silly';
 }
 
 var helpers = require('./helpers')(winston);

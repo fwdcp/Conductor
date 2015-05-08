@@ -181,7 +181,7 @@ var tasks = {
                 logger.info(chalk.green('Metamod:Source package installed.'));
             }, function(err) {
                 if (err) {
-                    logger.error(chalk.bgRed('Error encountered when copying Metamod:Source package:'));
+                    logger.error(chalk.bgRed('Error encountered when installing Metamod:Source package:'));
                     logger.error(chalk.bgRed(err.stack));
 
                     throw new Error('Metamod:Source package install failed.');
@@ -209,7 +209,7 @@ var tasks = {
                 logger.info(chalk.yellow('Metamod:Source core files updated.'));
             }, function(err) {
                 if (err) {
-                    logger.error(chalk.bgRed('Error encountered when downloading SRCDS for TF2:'));
+                    logger.error(chalk.bgRed('Error encountered when updating Metamod:Source core files:'));
                     logger.error(chalk.bgRed(err.stack));
 
                     throw new Error('Metamod:Source core files update failed.');
@@ -230,7 +230,7 @@ var tasks = {
                 logger.info(chalk.yellow('SourceMod core files updated.'));
             }, function(err) {
                 if (err) {
-                    logger.error(chalk.bgRed('Error encountered when downloading SRCDS for TF2:'));
+                    logger.error(chalk.bgRed('Error encountered when updating SourceMod core files:'));
                     logger.error(chalk.bgRed(err.stack));
 
                     throw new Error('SourceMod core files update failed.');

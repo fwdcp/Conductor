@@ -379,7 +379,7 @@ module.exports = function(logger) {
 
                     return Q.nfcall(glob, path.join(src, '*'));
                 })
-                .then(function() {
+                .then(function(matches) {
                     logger.log('verbose', '[' + name + '] Syncing files...');
 
                     var deferred = Q.defer();

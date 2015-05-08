@@ -6,9 +6,8 @@ var child_process = require('child_process');
 var path = require('path');
 var Q = require('q');
 var underscore = require('underscore');
+var winston = require('winston');
 var yargs = require('yargs');
-
-var helpers = require('./helpers');
 
 var argv = yargs
     .usage('$0 <command> <server-path>')
@@ -47,6 +46,21 @@ var argv = yargs
     .version('0.1.0')
     .argv;
 
+if (argv.verbose == 0) {
+    winston.transports.console.level = 'info';
+}
+else if (argv.verbose == 1) {
+    winston.transports.console.level = 'verbose';
+}
+else if (argv.verbose == 2) {
+    winston.transports.console.level = 'debug';
+}
+else if (argv.verbose == 3) {
+    winston.transports.console.level = 'silly';
+}
+
+var helpers = require('./helpers')(winston);
+
 var tasks = {};
 
 var command = argv._[0];
@@ -54,87 +68,87 @@ var serverPath = path.resolve(argv._[1]);
 
 var tasks = {
     'srcds-download': function() {
-        console.log(chalk.cyan('Downloading the SRCDS for TF2...'));
-        return helpers.steamcmdUpdate(path.resolve(argv.steamcmd), 232250, 'anonymous', '')
+        winston.info(chalk.cyan('Downloading the SRCDS for TF2...'));
+        return helpers.steamcmdUpdate('SRCDS download', path.resolve(argv.steamcmd), 232250, 'anonymous', '')
             .then(function() {
-                console.log(chalk.cyan('SRCDS for TF2 downloaded.'));
+                winston.info(chalk.cyan('SRCDS for TF2 downloaded.'));
             });
     },
     'hl2sdk-download': function() {
-        console.log(chalk.cyan('Downloading the HL2SDK for TF2...'));
-        return helpers.checkoutRepo(path.resolve(argv.hl2sdk), 'https://github.com/alliedmodders/hl2sdk.git', 'tf2')
+        winston.info(chalk.cyan('Downloading the HL2SDK for TF2...'));
+        return helpers.checkoutRepo('HL2SDK download', path.resolve(argv.hl2sdk), 'https://github.com/alliedmodders/hl2sdk.git', 'tf2')
             .then(function() {
-                console.log(chalk.cyan('HL2SDK for TF2 downloaded.'));
+                winston.info(chalk.cyan('HL2SDK for TF2 downloaded.'));
             });
     },
     'metamod-download': function() {
-        console.log(chalk.cyan('Downloading the Metamod:Source source...'));
-        return helpers.checkoutRepo(path.resolve(argv.metamod), 'https://github.com/alliedmodders/metamod-source.git', argv.metamodCheckout)
+        winston.info(chalk.cyan('Downloading the Metamod:Source source...'));
+        return helpers.checkoutRepo('MM:S download', path.resolve(argv.metamod), 'https://github.com/alliedmodders/metamod-source.git', argv.metamodCheckout)
             .then(function() {
-                console.log(chalk.cyan('Metamod:Source source downloaded.'));
+                winston.info(chalk.cyan('Metamod:Source source downloaded.'));
             });
     },
     'sourcemod-download': function() {
-        console.log(chalk.cyan('Downloading the SourceMod source...'));
-        return helpers.checkoutRepo(path.resolve(argv.sourcemod), 'https://github.com/alliedmodders/sourcemod.git', argv.sourcemodCheckout)
+        winston.info(chalk.cyan('Downloading the SourceMod source...'));
+        return helpers.checkoutRepo('SM download', path.resolve(argv.sourcemod), 'https://github.com/alliedmodders/sourcemod.git', argv.sourcemodCheckout)
             .then(function() {
-                console.log(chalk.cyan('SourceMod source downloaded.'));
+                winston.info(chalk.cyan('SourceMod source downloaded.'));
             });
     },
     'metamod-build': ['hl2sdk-download', 'metamod-download', function() {
-        console.log(chalk.magenta('Building Metamod:Source with AMBuild...'));
-        return helpers.ambuild(path.resolve(argv.metamod), ['--sdks=tf2'], {'HL2SDKTF2': path.resolve(argv.hl2sdk)})
+        winston.info(chalk.magenta('Building Metamod:Source with AMBuild...'));
+        return helpers.ambuild('MM:S build', path.resolve(argv.metamod), ['--sdks=tf2'], {'HL2SDKTF2': path.resolve(argv.hl2sdk)})
             .then(function() {
-                console.log(chalk.magenta('Metamod:Source built.'));
+                winston.info(chalk.magenta('Metamod:Source built.'));
             });
     }],
     'sourcemod-build': ['hl2sdk-download', 'metamod-download', 'sourcemod-download', function() {
-        console.log(chalk.magenta('Building SourceMod with AMBuild...'));
-        return helpers.ambuild(path.resolve(argv.sourcemod), ['--sdks=tf2', '--no-mysql'], {'HL2SDKTF2': path.resolve(argv.hl2sdk), 'MMSOURCE_DEV': path.resolve(argv.metamod)})
+        winston.info(chalk.magenta('Building SourceMod with AMBuild...'));
+        return helpers.ambuild('SM build', path.resolve(argv.sourcemod), ['--sdks=tf2', '--no-mysql'], {'HL2SDKTF2': path.resolve(argv.hl2sdk), 'MMSOURCE_DEV': path.resolve(argv.metamod)})
             .then(function() {
-                console.log(chalk.magenta('SourceMod built.'));
+                winston.info(chalk.magenta('SourceMod built.'));
             });
     }],
     'srcds-link': ['srcds-download', function() {
-        console.log(chalk.gray('Linking SRCDS files...'));
-        return helpers.mirrorLink(path.join(path.resolve(argv.steamcmd), 'steamapps', 'common', 'Team Fortress 2 Dedicated Server'), serverPath, true, true)
+        winston.info(chalk.gray('Linking SRCDS files...'));
+        return helpers.mirrorLink('SRCDS link', path.join(path.resolve(argv.steamcmd), 'steamapps', 'common', 'Team Fortress 2 Dedicated Server'), serverPath, true, true)
             .then(function() {
-                console.log(chalk.gray('SRCDS files linked.'));
+                winston.info(chalk.gray('SRCDS files linked.'));
             });
     }],
     'metamod-install': ['metamod-build', 'srcds-link', function() {
-        console.log(chalk.gray('Copying Metamod:Source package...'));
-        return helpers.mirror(path.join(path.resolve(argv.metamod), 'build', 'package'), path.join(serverPath, 'tf'), true, false)
+        winston.info(chalk.gray('Copying Metamod:Source package...'));
+        return helpers.mirror('MM:S install', path.join(path.resolve(argv.metamod), 'build', 'package'), path.join(serverPath, 'tf'), true, false)
             .then(function() {
-                console.log(chalk.gray('Metamod:Source package copied.'));
+                winston.info(chalk.gray('Metamod:Source package copied.'));
             });
     }],
     'sourcemod-install': ['sourcemod-build', 'srcds-link', function() {
-        console.log(chalk.gray('Copying SourceMod package...'));
-        return helpers.mirror(path.join(path.resolve(argv.sourcemod), 'build', 'package'), path.join(serverPath, 'tf'), true, false)
+        winston.info(chalk.gray('Copying SourceMod package...'));
+        return helpers.mirror('SM install', path.join(path.resolve(argv.sourcemod), 'build', 'package'), path.join(serverPath, 'tf'), true, false)
             .then(function() {
-                console.log(chalk.gray('SourceMod package copied.'));
+                winston.info(chalk.gray('SourceMod package copied.'));
             });
     }],
     'metamod-update': ['metamod-build', 'srcds-link', function() {
-        console.log(chalk.gray('Copying Metamod:Source core files...'));
-        return helpers.mirror(path.join(path.resolve(argv.metamod), 'build', 'package', 'addons', 'metamod', 'bin'), path.join(serverPath, 'tf', 'addons', 'metamod', 'bin'), true, false)
+        winston.info(chalk.gray('Copying Metamod:Source core files...'));
+        return helpers.mirror('MM:S update', path.join(path.resolve(argv.metamod), 'build', 'package', 'addons', 'metamod', 'bin'), path.join(serverPath, 'tf', 'addons', 'metamod', 'bin'), true, false)
             .then(function() {
-                console.log(chalk.gray('Metamod:Source core files copied.'));
+                winston.info(chalk.gray('Metamod:Source core files copied.'));
             });
     }],
     'sourcemod-update': ['sourcemod-build', 'srcds-link', function() {
-        console.log(chalk.gray('Copying SourceMod core files...'));
+        winston.info(chalk.gray('Copying SourceMod core files...'));
         return Promise.all([
-                helpers.mirror(path.join(path.resolve(argv.sourcemod), 'build', 'package', 'addons', 'sourcemod', 'bin'), path.join(serverPath, 'tf', 'addons', 'sourcemod', 'bin'), true, false),
-                helpers.mirror(path.join(path.resolve(argv.sourcemod), 'build', 'package', 'addons', 'sourcemod', 'extensions'), path.join(serverPath, 'tf', 'addons', 'sourcemod', 'extensions'), true, false),
-                helpers.mirror(path.join(path.resolve(argv.sourcemod), 'build', 'package', 'addons', 'sourcemod', 'gamedata'), path.join(serverPath, 'tf', 'addons', 'sourcemod', 'gamedata'), true, false),
-                helpers.mirror(path.join(path.resolve(argv.sourcemod), 'build', 'package', 'addons', 'sourcemod', 'plugins'), path.join(serverPath, 'tf', 'addons', 'sourcemod', 'plugins'), false, true),
-                helpers.mirror(path.join(path.resolve(argv.sourcemod), 'build', 'package', 'addons', 'sourcemod', 'plugins'), path.join(serverPath, 'tf', 'addons', 'sourcemod', 'plugins', 'disabled'), false, true),
-                helpers.mirror(path.join(path.resolve(argv.sourcemod), 'build', 'package', 'addons', 'sourcemod', 'scripting'), path.join(serverPath, 'tf', 'addons', 'sourcemod', 'scripting'), true, false),
-                helpers.mirror(path.join(path.resolve(argv.sourcemod), 'build', 'package', 'addons', 'sourcemod', 'translations'), path.join(serverPath, 'tf', 'addons', 'sourcemod', 'translations'), true, false)
+                helpers.mirror('SM binary update', path.join(path.resolve(argv.sourcemod), 'build', 'package', 'addons', 'sourcemod', 'bin'), path.join(serverPath, 'tf', 'addons', 'sourcemod', 'bin'), true, false),
+                helpers.mirror('SM extension update', path.join(path.resolve(argv.sourcemod), 'build', 'package', 'addons', 'sourcemod', 'extensions'), path.join(serverPath, 'tf', 'addons', 'sourcemod', 'extensions'), true, false),
+                helpers.mirror('SM gamedata update', path.join(path.resolve(argv.sourcemod), 'build', 'package', 'addons', 'sourcemod', 'gamedata'), path.join(serverPath, 'tf', 'addons', 'sourcemod', 'gamedata'), true, false),
+                helpers.mirror('SM plugin update', path.join(path.resolve(argv.sourcemod), 'build', 'package', 'addons', 'sourcemod', 'plugins'), path.join(serverPath, 'tf', 'addons', 'sourcemod', 'plugins'), false, true),
+                helpers.mirror('SM disabled plugin update', path.join(path.resolve(argv.sourcemod), 'build', 'package', 'addons', 'sourcemod', 'plugins'), path.join(serverPath, 'tf', 'addons', 'sourcemod', 'plugins', 'disabled'), false, true),
+                helpers.mirror('SM script update', path.join(path.resolve(argv.sourcemod), 'build', 'package', 'addons', 'sourcemod', 'scripting'), path.join(serverPath, 'tf', 'addons', 'sourcemod', 'scripting'), true, false),
+                helpers.mirror('SM translation update', path.join(path.resolve(argv.sourcemod), 'build', 'package', 'addons', 'sourcemod', 'translations'), path.join(serverPath, 'tf', 'addons', 'sourcemod', 'translations'), true, false)
             ]).then(function() {
-                console.log(chalk.gray('SourceMod core files copied.'));
+                winston.info(chalk.gray('SourceMod core files copied.'));
             });
     }]
 };
@@ -148,7 +162,7 @@ function runServer() {
         cwd: serverPath
     });
 
-    console.log(chalk.bgGreen('Running server!'));
+    winston.info(chalk.bgGreen('Running server!'));
 
     game.stderr.pipe(process.stderr);
 
@@ -172,8 +186,8 @@ if (command === 'install') {
         .auto(underscore.pick(tasks, 'srcds-download', 'hl2sdk-download', 'metamod-download', 'sourcemod-download', 'metamod-build', 'sourcemod-build', 'srcds-link', 'metamod-install', 'sourcemod-install'))
         .catch(function(err) {
             if (err) {
-                console.log(chalk.bgRed('Error encountered when installing:'));
-                console.log(chalk.bgRed(err.trace || err));
+                winston.error(chalk.bgRed('Error encountered when installing:'));
+                winston.error(chalk.bgRed(err.trace || err));
             }
         })
         .done();
@@ -183,8 +197,8 @@ else if (command === 'update') {
         .auto(underscore.pick(tasks, 'srcds-download', 'hl2sdk-download', 'metamod-download', 'sourcemod-download', 'metamod-build', 'sourcemod-build', 'srcds-link', 'metamod-update', 'sourcemod-update'))
         .catch(function(err) {
             if (err) {
-                console.log(chalk.bgRed('Error encountered when updating:'));
-                console.log(chalk.bgRed(err.trace || err));
+                winston.error(chalk.bgRed('Error encountered when updating:'));
+                winston.error(chalk.bgRed(err.trace || err));
             }
         })
         .done();
@@ -193,8 +207,8 @@ else if (command === 'run') {
     runServer()
         .catch(function(err) {
             if (err) {
-                console.log(chalk.bgRed('Error encountered when running:'));
-                console.log(chalk.bgRed(err.trace || err));
+                winston.error(chalk.bgRed('Error encountered when running:'));
+                winston.error(chalk.bgRed(err.trace || err));
             }
         })
         .done();
@@ -205,8 +219,8 @@ else if (command === 'run-updated') {
         .then(runServer)
         .catch(function(err) {
             if (err) {
-                console.log(chalk.bgRed('Error encountered when running:'));
-                console.log(chalk.bgRed(err.trace || err));
+                winston.error(chalk.bgRed('Error encountered when running:'));
+                winston.error(chalk.bgRed(err.trace || err));
             }
         })
         .done();

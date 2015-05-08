@@ -149,7 +149,7 @@ module.exports = function(logger) {
                                                         var upstreamMatch = /refs\/remotes\/(.+)/.exec(NodeGit.Branch.upstream(ref).name());
 
                                                         if (localMatch && localMatch[1] && upstreamMatch && upstreamMatch[1]) {
-                                                            logger.log('verbose', '[' + name + '] Merging upstream branch' + upstreamMatch[1] + ' into local branch ' + localMatch[1] + '...');
+                                                            logger.log('verbose', '[' + name + '] Merging upstream branch ' + upstreamMatch[1] + ' into local branch ' + localMatch[1] + '...');
 
                                                             return repo.mergeBranches(localMatch[1], upstreamMatch[1]);
                                                         }

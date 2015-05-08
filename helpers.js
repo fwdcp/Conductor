@@ -136,7 +136,7 @@ exports.checkoutRepo = function(name, repoPath, url, refName) {
                                                 return NodeGit.Branch.name(branch)
                                                     .then(function(localName) {
                                                         // getting the name of an upstream branch causes crashes, so let's avoid that
-                                                        var match = /refs\/remotes\/(.+)/.exec(remoteBranch.ref.name());
+                                                        var match = /refs\/remotes\/(.+)/.exec(NodeGit.Branch.upstream(ref).name());
 
                                                         if (match && match[1]) {
                                                             return repo.mergeBranches(localName, match[1]);

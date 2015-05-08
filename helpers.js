@@ -6,7 +6,6 @@ var NodeGit = require('nodegit');
 var path = require('path');
 var Q = require('q');
 
-module.exports = function(logLevel) {}
 exports.steamcmdUpdate = function(name, steamcmd, appid, username, password) {
     return Q.fcall(function() {
         var deferred = Q.defer();

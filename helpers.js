@@ -198,26 +198,29 @@ exports.checkoutRepo = function(name, repoPath, url, refName) {
 
                     var deferred = Q.defer();
 
-                    var submoduleUpdate = child_process.spawn('git', [
-                        'submodule', 'update',
-                        '--init', '--recursive'
-                    ], {
-                        cwd: repoPath
-                    });
+                    // for some reason this has an issue if not delayed
+                    setTimeout(function() {
+                        var submoduleUpdate = child_process.spawn('git', [
+                            'submodule', 'update',
+                            '--init', '--recursive'
+                        ], {
+                            cwd: repoPath
+                        });
 
-                    submoduleUpdate.stderr.pipe(process.stderr);
+                        submoduleUpdate.stderr.pipe(process.stderr);
 
-                    submoduleUpdate.on('exit', function(code, signal) {
-                        if (signal) {
-                            deferred.reject(new Error('Git submodule update was killed with signal: ' + signal));
-                        }
-                        else if (code) {
-                            deferred.reject(new Error('Git submodule update exited with code: ' + code));
-                        }
-                        else {
-                            deferred.resolve();
-                        }
-                    });
+                        submoduleUpdate.on('exit', function(code, signal) {
+                            if (signal) {
+                                deferred.reject(new Error('Git submodule update was killed with signal: ' + signal));
+                            }
+                            else if (code) {
+                                deferred.reject(new Error('Git submodule update exited with code: ' + code));
+                            }
+                            else {
+                                deferred.resolve();
+                            }
+                        });
+                    }, 5000);
 
                     return deferred.promise;
                 });

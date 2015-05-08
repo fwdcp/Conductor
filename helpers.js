@@ -150,7 +150,7 @@ exports.checkoutRepo = function(name, repoPath, url, refName) {
                                                                         return commit.getTree();
                                                                     })
                                                                     .then(function(tree) {
-                                                                        return NodeGit.Checkout.tree(repo, tree, {checkoutStrategy: NodeGit.Checkout.STRATEGY.SAFE_CREATE});
+                                                                        return NodeGit.Checkout.tree(repo, tree, {checkoutStrategy: NodeGit.Checkout.STRATEGY.FORCE});
                                                                     })
                                                                     .then(function() {
                                                                         return repo.setHead(ref.name(), repo.defaultSignature(), 'Switched to ' + refName);

@@ -294,7 +294,7 @@ exports.mirror = function(src, dest, link, force) {
                 var copy = child_process.spawn('cp', matches.concat([
                     dest,
                     '-r'
-                ], link ? ['-s'] : [], force ? ['-f'] : ['-n']));
+                ], link ? ['-s'] : [], force ? ['--remove-destination'] : ['-n']));
 
                 copy.stderr.pipe(process.stderr);
 

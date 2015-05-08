@@ -6,6 +6,7 @@ var NodeGit = require('nodegit');
 var path = require('path');
 var Q = require('q');
 
+module.exports = function(logLevel) {}
 exports.steamcmdUpdate = function(name, steamcmd, appid, username, password) {
     return Q.fcall(function() {
         var deferred = Q.defer();
@@ -17,6 +18,8 @@ exports.steamcmdUpdate = function(name, steamcmd, appid, username, password) {
         ], {
             cwd: steamcmd
         });
+
+        update.stderr.pipe(process.stderr);
 
         update.on('exit', function(code, signal) {
             if (signal) {
@@ -188,6 +191,8 @@ exports.checkoutRepo = function(name, repoPath, url, refName) {
                     cwd: repoPath
                 });
 
+                submoduleUpdate.stderr.pipe(process.stderr);
+
                 submoduleUpdate.on('exit', function(code, signal) {
                     if (signal) {
                         deferred.reject(new Error('Git submodule update was killed with signal: ' + signal));
@@ -244,6 +249,8 @@ exports.ambuild = function(name, repo, extraArgs, extraEnv) {
                 env: env
             });
 
+            configure.stderr.pipe(process.stderr);
+
             configure.on('exit', function(code, signal) {
                 if (signal) {
                     deferred.reject(new Error('Configure script was killed with signal: ' + signal));
@@ -264,6 +271,8 @@ exports.ambuild = function(name, repo, extraArgs, extraEnv) {
             var build = child_process.spawn('ambuild', {
                 cwd: path.join(repo, 'build')
             });
+
+            build.stderr.pipe(process.stderr);
 
             build.on('exit', function(code, signal) {
                 if (signal) {

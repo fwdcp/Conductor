@@ -103,7 +103,7 @@ if (command === 'install') {
     extend(tasks, {
         'srcds-link': ['srcds-download', function() {
             console.log(chalk.gray('Linking SRCDS files...'));
-            return helpers.mirror(path.join(path.resolve(argv.steamcmd), 'steamapps', 'common', 'Team Fortress 2 Dedicated Server'), serverPath, true, false)
+            return helpers.mirror(path.join(path.resolve(argv.steamcmd), 'steamapps', 'common', 'Team Fortress 2 Dedicated Server'), serverPath, true, true)
                 .then(function() {
                     console.log(chalk.gray('SRCDS files linked.'));
                 });

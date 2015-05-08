@@ -1,6 +1,7 @@
 var child_process = require('child_process');
 var fs = require('fs-extra');
 var extend = require('extend');
+var glob = require('glob');
 var ini = require('ini');
 var NodeGit = require('nodegit');
 var path = require('path');
@@ -282,53 +283,61 @@ exports.ambuild = function(repo, extraArgs, extraEnv) {
 };
 
 exports.mirrorLink = function(src, dest) {
-    var deferred = Q.defer();
+    return Q.nfcall(glob, path.join(src, '*'))
+        .then(function(matches) {
+            if (matches && matches.length >= 0) {
+                var deferred = Q.defer();
 
-    var copy = child_process.spawn('cp', [
-        '-rsf',
-        path.join(src, '*'),
-        dest
-    ]);
+                var copy = child_process.spawn('cp', matches.concat([
+                    dest,
+                    '-rsf'
+                ]));
 
-    copy.stderr.pipe(process.stderr);
+                copy.stderr.pipe(process.stderr);
 
-    copy.on('exit', function(code, signal) {
-        if (signal) {
-            deferred.reject(new Error('Copy was killed with signal: ' + signal));
-        }
-        else if (code) {
-            deferred.reject(new Error('Copy exited with code: ' + code));
-        }
-        else {
-            deferred.resolve();
-        }
-    });
+                copy.on('exit', function(code, signal) {
+                    if (signal) {
+                        deferred.reject(new Error('Copy was killed with signal: ' + signal));
+                    }
+                    else if (code) {
+                        deferred.reject(new Error('Copy exited with code: ' + code));
+                    }
+                    else {
+                        deferred.resolve();
+                    }
+                });
 
-    return deferred.promise;
+                return deferred.promise;
+            }
+        });
 };
 
 exports.mirror = function(src, dest) {
-    var deferred = Q.defer();
+    return Q.nfcall(glob, path.join(src, '*'))
+        .then(function(matches) {
+            if (matches && matches.length >= 0) {
+                var deferred = Q.defer();
 
-    var copy = child_process.spawn('cp', [
-        '-rn',
-        path.join(src, '*'),
-        dest
-    ]);
+                var copy = child_process.spawn('cp', matches.concat([
+                    dest,
+                    '-rn'
+                ]));
 
-    copy.stderr.pipe(process.stderr);
+                copy.stderr.pipe(process.stderr);
 
-    copy.on('exit', function(code, signal) {
-        if (signal) {
-            deferred.reject(new Error('Copy was killed with signal: ' + signal));
-        }
-        else if (code) {
-            deferred.reject(new Error('Copy exited with code: ' + code));
-        }
-        else {
-            deferred.resolve();
-        }
-    });
+                copy.on('exit', function(code, signal) {
+                    if (signal) {
+                        deferred.reject(new Error('Copy was killed with signal: ' + signal));
+                    }
+                    else if (code) {
+                        deferred.reject(new Error('Copy exited with code: ' + code));
+                    }
+                    else {
+                        deferred.resolve();
+                    }
+                });
 
-    return deferred.promise;
+                return deferred.promise;
+            }
+        });
 };

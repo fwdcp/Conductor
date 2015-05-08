@@ -245,10 +245,10 @@ exports.ambuild = function(repo, extraArgs, extraEnv) {
 
             configure.on('exit', function(code, signal) {
                 if (signal) {
-                    deferred.reject(new Error('Configure script was killed with signal: ' + signal));
+                    deferred.reject(new Error('Configure was killed with signal: ' + signal));
                 }
                 else if (code) {
-                    deferred.reject(new Error('Configure script exited with code: ' + code));
+                    deferred.reject(new Error('Configure exited with code: ' + code));
                 }
                 else {
                     deferred.resolve();
@@ -268,10 +268,10 @@ exports.ambuild = function(repo, extraArgs, extraEnv) {
 
             build.on('exit', function(code, signal) {
                 if (signal) {
-                    deferred.reject(new Error('Build process was killed with signal: ' + signal));
+                    deferred.reject(new Error('Build was killed with signal: ' + signal));
                 }
                 else if (code) {
-                    deferred.reject(new Error('Build process exited with code: ' + code));
+                    deferred.reject(new Error('Build exited with code: ' + code));
                 }
                 else {
                     deferred.resolve();
@@ -282,7 +282,7 @@ exports.ambuild = function(repo, extraArgs, extraEnv) {
         });
 };
 
-exports.mirror = function(src, dest, link, force) {
+exports.mirrorLink = function(src, dest, force) {
     return Q.nfcall(fs.mkdirs, dest)
         .then(function() {
             return Q.nfcall(glob, path.join(src, '*'));
@@ -293,17 +293,18 @@ exports.mirror = function(src, dest, link, force) {
 
                 var copy = child_process.spawn('cp', matches.concat([
                     dest,
-                    '-r'
-                ], link ? ['-s'] : [], force ? ['--remove-destination'] : ['-n']));
+                    '-r',
+                    '-s'
+                ], force ? ['--remove-destination'] : ['-n']));
 
                 copy.stderr.pipe(process.stderr);
 
                 copy.on('exit', function(code, signal) {
                     if (signal) {
-                        deferred.reject(new Error('Copy was killed with signal: ' + signal));
+                        deferred.reject(new Error('Link was killed with signal: ' + signal));
                     }
                     else if (code) {
-                        deferred.reject(new Error('Copy exited with code: ' + code));
+                        deferred.reject(new Error('Link exited with code: ' + code));
                     }
                     else {
                         deferred.resolve();
@@ -312,5 +313,33 @@ exports.mirror = function(src, dest, link, force) {
 
                 return deferred.promise;
             }
+        });
+};
+
+exports.mirror = function(src, dest, recursive, existingOnly) {
+    return Q.nfcall(fs.mkdirs, dest)
+        .then(function() {
+            var deferred = Q.defer();
+
+            var sync = child_process.spawn('rsync', [
+                src,
+                dest
+            ].concat(recursive ? ['-r'] : [], existingOnly ? ['--existing'] : []));
+
+            sync.stderr.pipe(process.stderr);
+
+            sync.on('exit', function(code, signal) {
+                if (signal) {
+                    deferred.reject(new Error('Sync was killed with signal: ' + signal));
+                }
+                else if (code) {
+                    deferred.reject(new Error('Sync exited with code: ' + code));
+                }
+                else {
+                    deferred.resolve();
+                }
+            });
+
+            return deferred.promise;
         });
 };

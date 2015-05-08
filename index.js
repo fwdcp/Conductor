@@ -313,7 +313,7 @@ else if (command === 'run') {
 }
 else if (command === 'run-updated') {
     async
-        .auto(underscore.pick(tasks, 'srcds-download', 'hl2sdk-download', 'metamod-download', 'metamod-build', 'sourcemod-build', 'srcds-link', 'metamod-update', 'sourcemod-update'))
+        .auto(underscore.pick(tasks, 'srcds-download', 'hl2sdk-download', 'metamod-download', 'sourcemod-download', 'metamod-build', 'sourcemod-build', 'srcds-link', 'metamod-update', 'sourcemod-update'))
         .catch(function(err) {
             if (err) {
                 logger.error(chalk.bgRed('Update failed:'));

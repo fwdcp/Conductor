@@ -375,14 +375,18 @@ module.exports = function(logger) {
         mirror: function(name, src, dest, recursive, existingOnly) {
             return Q.nfcall(fs.mkdirs, dest)
                 .then(function() {
+                    logger.log('verbose', '[' + name + '] Calculating glob for source...');
+
+                    return Q.nfcall(glob, path.join(src, '*'));
+                })
+                .then(function() {
                     logger.log('verbose', '[' + name + '] Syncing files...');
 
                     var deferred = Q.defer();
 
-                    var sync = child_process.spawn('rsync', [
-                        src,
+                    var sync = child_process.spawn('rsync', matches.concat([
                         dest
-                    ].concat(recursive ? ['-r'] : [], existingOnly ? ['--existing'] : []));
+                    ], recursive ? ['-r'] : [], existingOnly ? ['--existing'] : []));
 
                     sync.stdout.on('data', function(out) {
                         logger.log('debug', '[' + name + ' - Sync] ' + out);

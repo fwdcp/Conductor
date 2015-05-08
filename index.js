@@ -169,7 +169,7 @@ function runServer() {
 
 if (command === 'install') {
     async
-        .auto(underscore.pick(tasks, 'srcds-download', 'hl2sdk-download', 'metamod-download', 'metamod-build', 'sourcemod-build', 'srcds-link', 'metamod-install', 'sourcemod-install'))
+        .auto(underscore.pick(tasks, 'srcds-download', 'hl2sdk-download', 'metamod-download', 'sourcemod-download', 'metamod-build', 'sourcemod-build', 'srcds-link', 'metamod-install', 'sourcemod-install'))
         .catch(function(err) {
             if (err) {
                 console.log(chalk.bgRed('Error encountered when installing:'));
@@ -180,7 +180,7 @@ if (command === 'install') {
 }
 else if (command === 'update') {
     async
-        .auto(underscore.pick(tasks, 'srcds-download', 'hl2sdk-download', 'metamod-download', 'metamod-build', 'sourcemod-build', 'srcds-link', 'metamod-update', 'sourcemod-update'))
+        .auto(underscore.pick(tasks, 'srcds-download', 'hl2sdk-download', 'metamod-download', 'sourcemod-download', 'metamod-build', 'sourcemod-build', 'srcds-link', 'metamod-update', 'sourcemod-update'))
         .catch(function(err) {
             if (err) {
                 console.log(chalk.bgRed('Error encountered when updating:'));

@@ -10,6 +10,7 @@ var helpers = require('./helpers');
 
 var argv = yargs
     .usage('$0 <command> <server-path>')
+    .demand(2)
     .command('install', 'install a server')
     .command('update', 'update a server')
     .command('run', 'run a server')
@@ -49,37 +50,53 @@ var argv = yargs
 var tasks = {};
 
 var command = argv._[0];
+var serverPath = path.resolve(argv._[1]);
 
 if (command !== 'run') {
     extend(tasks, {
         'srcds': function() {
             console.log(chalk.cyan('Downloading the dedicated server for TF2...'));
-            return helpers.steamcmdUpdate('SRCDS', path.resolve(argv.steamcmd), 232250, 'anonymous', '');
+            return helpers.steamcmdUpdate(path.resolve(argv.steamcmd), 232250, 'anonymous', '');
         },
         'hl2sdk': function() {
             console.log(chalk.cyan('Downloading the HL2SDK for TF2...'));
-            return helpers.checkoutRepo('HL2SDK', path.resolve(argv.hl2sdk), 'https://github.com/alliedmodders/hl2sdk.git', 'tf2');
+            return helpers.checkoutRepo(path.resolve(argv.hl2sdk), 'https://github.com/alliedmodders/hl2sdk.git', 'tf2');
         },
         'metamod': function() {
             console.log(chalk.cyan('Downloading the Metamod:Source source...'));
-            return helpers.checkoutRepo('Metamod:Source', path.resolve(argv.metamod), 'https://github.com/alliedmodders/metamod-source.git', argv.metamodCommit);
+            return helpers.checkoutRepo(path.resolve(argv.metamod), 'https://github.com/alliedmodders/metamod-source.git', argv.metamodCommit);
         },
         'sourcemod': function() {
             console.log(chalk.cyan('Downloading the SourceMod source...'));
-            return helpers.checkoutRepo('SourceMod', path.resolve(argv.sourcemod), 'https://github.com/alliedmodders/sourcemod.git', argv.sourcemodCommit);
+            return helpers.checkoutRepo(path.resolve(argv.sourcemod), 'https://github.com/alliedmodders/sourcemod.git', argv.sourcemodCommit);
         },
-        'metamod-build': ['hl2sdk', 'metamod', function(results) {
+        'metamod-build': ['hl2sdk', 'metamod', function() {
             console.log(chalk.magenta('Building Metamod:Source with AMBuild...'));
-            return helpers.ambuild('Metamod:Source', path.resolve(argv.metamod), ['--sdks=tf2'], {'HL2SDKTF2': path.resolve(argv.hl2sdk)});
+            return helpers.ambuild(path.resolve(argv.metamod), ['--sdks=tf2'], {'HL2SDKTF2': path.resolve(argv.hl2sdk)});
         }],
-        'sourcemod-build': ['hl2sdk', 'metamod', 'sourcemod', function(results) {
+        'sourcemod-build': ['hl2sdk', 'metamod', 'sourcemod', function() {
             console.log(chalk.magenta('Building SourceMod with AMBuild...'));
-            return helpers.ambuild('SourceMod', path.resolve(argv.sourcemod), ['--sdks=tf2', '--no-mysql'], {'HL2SDKTF2': path.resolve(argv.hl2sdk), 'MMSOURCE_DEV': path.resolve(argv.metamod)});
+            return helpers.ambuild(path.resolve(argv.sourcemod), ['--sdks=tf2', '--no-mysql'], {'HL2SDKTF2': path.resolve(argv.hl2sdk), 'MMSOURCE_DEV': path.resolve(argv.metamod)});
         }]
     });
 }
 
 if (command === 'install') {
+    extend(tasks, {
+        'srcds-link': ['srcds', function() {
+            console.log(chalk.gray('Linking SRCDS files...'));
+            return helpers.mirrorLink(path.join(path.resolve(argv.steamcmd), 'steamapps', 'common', 'Team Fortress 2 Dedicated Server'), serverPath);
+        }],
+        'metamod-copy': ['srcds-link', function() {
+            console.log(chalk.gray('Copying Metamod:Source package...'));
+            return helpers.mirrorLink(path.join(path.resolve(argv.metamod), 'build', 'package'), serverPath);
+        }],
+        'sourcemod-copy': ['srcds-link', function() {
+            console.log(chalk.gray('Copying SourceMod package...'));
+            return helpers.mirrorLink(path.join(path.resolve(argv.sourcemod), 'build', 'package'), serverPath);
+        }]
+    });
+
     async.auto(tasks).catch(function(err) {
         if (err) {
             console.log(chalk.bgRed('Error encountered when installing:'));

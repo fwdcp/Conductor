@@ -6,37 +6,35 @@ var NodeGit = require('nodegit');
 var path = require('path');
 var Q = require('q');
 
-exports.steamcmdUpdate = function(name, steamcmd, appid, username, password) {
-    return Q.fcall(function() {
-        var deferred = Q.defer();
+exports.steamcmdUpdate = function(steamcmd, appid, username, password) {
+    var deferred = Q.defer();
 
-        var update = child_process.spawn('./steamcmd.sh', [
-            '+login', username, password,
-            '+app_update', appid, 'validate',
-            '+quit'
-        ], {
-            cwd: steamcmd
-        });
-
-        update.stderr.pipe(process.stderr);
-
-        update.on('exit', function(code, signal) {
-            if (signal) {
-                deferred.reject(new Error('SteamCMD was killed with signal: ' + signal));
-            }
-            else if (code) {
-                deferred.reject(new Error('SteamCMD exited with code: ' + code));
-            }
-            else {
-                deferred.resolve();
-            }
-        });
-
-        return deferred.promise;
+    var update = child_process.spawn('./steamcmd.sh', [
+        '+login', username, password,
+        '+app_update', appid, 'validate',
+        '+quit'
+    ], {
+        cwd: steamcmd
     });
+
+    update.stderr.pipe(process.stderr);
+
+    update.on('exit', function(code, signal) {
+        if (signal) {
+            deferred.reject(new Error('SteamCMD was killed with signal: ' + signal));
+        }
+        else if (code) {
+            deferred.reject(new Error('SteamCMD exited with code: ' + code));
+        }
+        else {
+            deferred.resolve();
+        }
+    });
+
+    return deferred.promise;
 };
 
-exports.checkoutRepo = function(name, repoPath, url, refName) {
+exports.checkoutRepo = function(repoPath, url, refName) {
     return NodeGit.Repository.open(repoPath)
         .catch(function() {
             return Q.nfcall(fs.mkdirs, repoPath)
@@ -227,7 +225,7 @@ exports.checkoutRepo = function(name, repoPath, url, refName) {
         });
 };
 
-exports.ambuild = function(name, repo, extraArgs, extraEnv) {
+exports.ambuild = function(repo, extraArgs, extraEnv) {
     var env = {};
     extend(env, process.env, extraEnv);
 
@@ -281,4 +279,56 @@ exports.ambuild = function(name, repo, extraArgs, extraEnv) {
 
             return deferred.promise;
         });
+};
+
+exports.mirrorLink = function(src, dest) {
+    var deferred = Q.defer();
+
+    var copy = child_process.spawn('cp', [
+        '-rsf',
+        path.join(src, '*'),
+        dest
+    ]);
+
+    copy.stderr.pipe(process.stderr);
+
+    copy.on('exit', function(code, signal) {
+        if (signal) {
+            deferred.reject(new Error('Copy was killed with signal: ' + signal));
+        }
+        else if (code) {
+            deferred.reject(new Error('Copy exited with code: ' + code));
+        }
+        else {
+            deferred.resolve();
+        }
+    });
+
+    return deferred.promise;
+};
+
+exports.mirror = function(src, dest) {
+    var deferred = Q.defer();
+
+    var copy = child_process.spawn('cp', [
+        '-rn',
+        path.join(src, '*'),
+        dest
+    ]);
+
+    copy.stderr.pipe(process.stderr);
+
+    copy.on('exit', function(code, signal) {
+        if (signal) {
+            deferred.reject(new Error('Copy was killed with signal: ' + signal));
+        }
+        else if (code) {
+            deferred.reject(new Error('Copy exited with code: ' + code));
+        }
+        else {
+            deferred.resolve();
+        }
+    });
+
+    return deferred.promise;
 };

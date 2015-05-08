@@ -103,21 +103,21 @@ if (command === 'install') {
     extend(tasks, {
         'srcds-link': ['srcds-download', function() {
             console.log(chalk.gray('Linking SRCDS files...'));
-            return helpers.mirrorLink(path.join(path.resolve(argv.steamcmd), 'steamapps', 'common', 'Team Fortress 2 Dedicated Server'), serverPath)
+            return helpers.mirror(path.join(path.resolve(argv.steamcmd), 'steamapps', 'common', 'Team Fortress 2 Dedicated Server'), serverPath, true, false)
                 .then(function() {
                     console.log(chalk.gray('SRCDS files linked.'));
                 });
         }],
         'metamod-copy': ['metamod-build', 'srcds-link', function() {
             console.log(chalk.gray('Copying Metamod:Source package...'));
-            return helpers.mirrorLink(path.join(path.resolve(argv.metamod), 'build', 'package'), serverPath)
+            return helpers.mirror(path.join(path.resolve(argv.metamod), 'build', 'package'), serverPath, false, false)
                 .then(function() {
                     console.log(chalk.gray('Metamod:Source package copied.'));
                 });
         }],
         'sourcemod-copy': ['sourcemod-build', 'metamod-copy', function() {
             console.log(chalk.gray('Copying SourceMod package...'));
-            return helpers.mirrorLink(path.join(path.resolve(argv.sourcemod), 'build', 'package'), serverPath)
+            return helpers.mirror(path.join(path.resolve(argv.sourcemod), 'build', 'package'), serverPath, false, false)
                 .then(function() {
                     console.log(chalk.gray('SourceMod package copied.'));
                 });

@@ -282,45 +282,20 @@ exports.ambuild = function(repo, extraArgs, extraEnv) {
         });
 };
 
-exports.mirrorLink = function(src, dest) {
-    return Q.nfcall(glob, path.join(src, '*'))
+exports.mirror = function(src, dest, link, force) {
+    return Q.nfcall(fs.mkdirs, repoPath)
+        .then(function() {
+            return Q.nfcall(glob, path.join(src, '*'));
+        })
         .then(function(matches) {
             if (matches && matches.length >= 0) {
                 var deferred = Q.defer();
 
                 var copy = child_process.spawn('cp', matches.concat([
                     dest,
-                    '-rsf'
-                ]));
-
-                copy.stderr.pipe(process.stderr);
-
-                copy.on('exit', function(code, signal) {
-                    if (signal) {
-                        deferred.reject(new Error('Copy was killed with signal: ' + signal));
-                    }
-                    else if (code) {
-                        deferred.reject(new Error('Copy exited with code: ' + code));
-                    }
-                    else {
-                        deferred.resolve();
-                    }
-                });
-
-                return deferred.promise;
-            }
-        });
-};
-
-exports.mirror = function(src, dest) {
-    return Q.nfcall(glob, path.join(src, '*'))
-        .then(function(matches) {
-            if (matches && matches.length >= 0) {
-                var deferred = Q.defer();
-
-                var copy = child_process.spawn('cp', matches.concat([
-                    dest,
-                    '-rn'
+                    '-r',
+                    link ? '-s' : '',
+                    force ? '-f' : '-n'
                 ]));
 
                 copy.stderr.pipe(process.stderr);

@@ -174,52 +174,53 @@ exports.checkoutRepo = function(name, repoPath, url, refName) {
         })
         .then(function(repo) {
             return Q.fcall(function() {
-                //return NodeGit.Submodule.reloadAll(repo, 1);
-
-                var deferred = Q.defer();
-
-                var submoduleUpdate = child_process.spawn('git', [
-                    'submodule', 'update',
-                    '--init', '--recursive'
-                ], {
-                    cwd: repoPath
-                });
-
-                submoduleUpdate.stderr.pipe(process.stderr);
-
-                submoduleUpdate.on('exit', function(code, signal) {
-                    if (signal) {
-                        deferred.reject(new Error('Git submodule update was killed with signal: ' + signal));
-                    }
-                    else if (code) {
-                        deferred.reject(new Error('Git submodule update exited with code: ' + code));
-                    }
-                    else {
-                        deferred.resolve();
-                    }
-                });
-
-                return deferred.promise;
+                return NodeGit.Submodule.reloadAll(repo, 1);
             })
-                // for some reason updating submodules doesn't work either...
-                // .then(function() {
-                //     return Q.nfcall(fs.readFile, path.join(repoPath, '.gitmodules'), 'utf-8')
-                //         .then(function(data) {
-                //             var submoduleConfig = ini.parse(data);
-                //
-                //             return Promise.all(Object.keys(submoduleConfig).map(function(sectionName) {
-                //                 var match = /submodule \"(.+)\"/.exec(sectionName);
-                //
-                //                 if (match && match[1]) {
-                //                     return NodeGit.Submodule.lookup(repo, match[1]).then(function(submodule) {
-                //                         return submodule.update(1, null);
-                //                     });
-                //                 }
-                //             }));
-                //         }, function() {
-                //             return;
-                //         });
-                // });
+                .then(function() {
+                    // for some reason updating submodules doesn't work either...
+
+                    // return Q.nfcall(fs.readFile, path.join(repoPath, '.gitmodules'), 'utf-8')
+                    //     .then(function(data) {
+                    //         var submoduleConfig = ini.parse(data);
+                    //
+                    //         return Promise.all(Object.keys(submoduleConfig).map(function(sectionName) {
+                    //             var match = /submodule \"(.+)\"/.exec(sectionName);
+                    //
+                    //             if (match && match[1]) {
+                    //                 return NodeGit.Submodule.lookup(repo, match[1]).then(function(submodule) {
+                    //                     return submodule.update(1, null);
+                    //                 });
+                    //             }
+                    //         }));
+                    //     }, function() {
+                    //         return;
+                    //     });
+
+                    var deferred = Q.defer();
+
+                    var submoduleUpdate = child_process.spawn('git', [
+                        'submodule', 'update',
+                        '--init', '--recursive'
+                    ], {
+                        cwd: repoPath
+                    });
+
+                    submoduleUpdate.stderr.pipe(process.stderr);
+
+                    submoduleUpdate.on('exit', function(code, signal) {
+                        if (signal) {
+                            deferred.reject(new Error('Git submodule update was killed with signal: ' + signal));
+                        }
+                        else if (code) {
+                            deferred.reject(new Error('Git submodule update exited with code: ' + code));
+                        }
+                        else {
+                            deferred.resolve();
+                        }
+                    });
+
+                    return deferred.promise;
+                });
         });
 };
 

@@ -2,8 +2,10 @@
 
 var async = require('async-q');
 var chalk = require('chalk');
+var child_process = require('child_process');
 var extend = require('extend');
 var path = require('path');
+var Q = require('q');
 var yargs = require('yargs');
 
 var helpers = require('./helpers');

@@ -99,7 +99,7 @@ exports.checkoutRepo = function(name, repoPath, url, refName) {
                                                     return NodeGit.Branch.create(repo, refName, commit, 0, repo.defaultSignature(), null);
                                                 })
                                                 .then(function(ref) {
-                                                    // getting the name of an upstream branch causes crashes, so let's avoid that
+                                                    // getting the name of a branch causes crashes, so let's avoid that
                                                     var match = /refs\/remotes\/(.+)/.exec(remoteBranch.ref.name());
 
                                                     if (match && match[1]) {
@@ -130,19 +130,15 @@ exports.checkoutRepo = function(name, repoPath, url, refName) {
                                                 });
                                         }
                                         else {
-                                            var branch = ref;
-
                                             return Q.fcall(function() {
-                                                return NodeGit.Branch.name(branch)
-                                                    .then(function(localName) {
-                                                        // getting the name of an upstream branch causes crashes, so let's avoid that
-                                                        var match = /refs\/remotes\/(.+)/.exec(NodeGit.Branch.upstream(ref).name());
+                                                // getting the name of a branch causes crashes, so let's avoid that
+                                                var localMatch = /refs\/heads\/(.+)/.exec(ref.name());
+                                                var upstreamMatch = /refs\/remotes\/(.+)/.exec(NodeGit.Branch.upstream(ref).name());
 
-                                                        if (match && match[1]) {
-                                                            return repo.mergeBranches(localName, match[1]);
-                                                        }
-                                                    });
-                                                })
+                                                if (localMatch && localMatch[1] && upstreamMatch && upstreamMatch[1]) {
+                                                    return repo.mergeBranches(localMatch[1], upstreamMatch[1]);
+                                                }
+                                            })
                                                 .done(function() {
                                                     return repo.getCommit(branch.target())
                                                         .then(function(commit) {

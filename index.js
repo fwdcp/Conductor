@@ -29,16 +29,16 @@ var argv = yargs
     .describe('metamod', 'path to the Metamod:Source Git repository')
     .requiresArg('metamod')
     .string('metamod')
-    .default('metamod-commit', '1.10-dev')
-    .describe('metamod-commit', 'commit of Metamod:Source to build')
-    .string('metamod-commit')
+    .default('metamod-checkout', '1.10-dev')
+    .describe('metamod-checkout', 'commit of Metamod:Source to checkout and build')
+    .string('metamod-checkout')
     .default('sourcemod', './sourcemod')
     .describe('sourcemod', 'path to the SourceMod Git repository')
     .requiresArg('sourcemod')
     .string('sourcemod')
-    .default('sourcemod-commit', '1.7-dev')
-    .describe('sourcemod-commit', 'commit of SourceMod to build')
-    .string('sourcemod-commit')
+    .default('sourcemod-checkout', '1.7-dev')
+    .describe('sourcemod-checkout', 'commit of SourceMod to checkout and build')
+    .string('sourcemod-checkout')
     .config('c')
     .alias('c', 'config')
     .describe('verbose', 'print more information')
@@ -71,14 +71,14 @@ var tasks = {
     },
     'metamod-download': function() {
         console.log(chalk.cyan('Downloading the Metamod:Source source...'));
-        return helpers.checkoutRepo(path.resolve(argv.metamod), 'https://github.com/alliedmodders/metamod-source.git', argv.metamodCommit)
+        return helpers.checkoutRepo(path.resolve(argv.metamod), 'https://github.com/alliedmodders/metamod-source.git', argv.metamodCheckout)
             .then(function() {
                 console.log(chalk.cyan('Metamod:Source source downloaded.'));
             });
     },
     'sourcemod-download': function() {
         console.log(chalk.cyan('Downloading the SourceMod source...'));
-        return helpers.checkoutRepo(path.resolve(argv.sourcemod), 'https://github.com/alliedmodders/sourcemod.git', argv.sourcemodCommit)
+        return helpers.checkoutRepo(path.resolve(argv.sourcemod), 'https://github.com/alliedmodders/sourcemod.git', argv.sourcemodCheckout)
             .then(function() {
                 console.log(chalk.cyan('SourceMod source downloaded.'));
             });

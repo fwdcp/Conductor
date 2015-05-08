@@ -35,7 +35,7 @@ exports.steamcmdUpdate = function(steamcmd, appid, username, password) {
     return deferred.promise;
 };
 
-exports.checkoutRepo = function(repoPath, url, refName) {
+exports.checkoutRepo = function(repoPath, url, checkout) {
     return NodeGit.Repository.open(repoPath)
         .catch(function() {
             return Q.nfcall(fs.mkdirs, repoPath)
@@ -47,7 +47,7 @@ exports.checkoutRepo = function(repoPath, url, refName) {
                 });
         })
         .then(function(repo) {
-            if (refName) {
+            if (checkout) {
                 return repo.getStatusExt()
                     .then(function(statuses) {
                         if (statuses.length !== 0) {
@@ -58,13 +58,13 @@ exports.checkoutRepo = function(repoPath, url, refName) {
                         return repo.fetchAll({});
                     })
                     .then(function() {
-                        return NodeGit.Reference.dwim(repo, refName)
+                        return NodeGit.Reference.dwim(repo, checkout)
                             .catch(function() {
                                 return repo.getRemotes().then(function(remotes) {
                                     var getBranch = [];
 
                                     remotes.forEach(function(remote) {
-                                        getBranch.push(NodeGit.Branch.lookup(repo, remote + '/' + refName, NodeGit.Branch.BRANCH.REMOTE).then(function(ref) {
+                                        getBranch.push(NodeGit.Branch.lookup(repo, remote + '/' + checkout, NodeGit.Branch.BRANCH.REMOTE).then(function(ref) {
                                             return {remote: remote, ref: ref};
                                         }, function() {
                                             return null;
@@ -92,7 +92,7 @@ exports.checkoutRepo = function(repoPath, url, refName) {
                                         .then(function(remoteBranch) {
                                             return repo.getCommit(remoteBranch.ref.target())
                                                 .then(function(commit) {
-                                                    return NodeGit.Branch.create(repo, refName, commit, 0, repo.defaultSignature(), null);
+                                                    return NodeGit.Branch.create(repo, checkout, commit, 0, repo.defaultSignature(), null);
                                                 })
                                                 .then(function(ref) {
                                                     // getting the name of a branch causes crashes, so let's avoid that
@@ -121,7 +121,7 @@ exports.checkoutRepo = function(repoPath, url, refName) {
                                                             return NodeGit.Checkout.tree(repo, tree, {checkoutStrategy: NodeGit.Checkout.STRATEGY.SAFE_CREATE});
                                                         })
                                                         .then(function() {
-                                                            return repo.setHeadDetached(tag.targetId(), repo.defaultSignature(), 'Switched to ' + refName);
+                                                            return repo.setHeadDetached(tag.targetId(), repo.defaultSignature(), 'Switched to ' + checkout);
                                                         });
                                                 });
                                         }
@@ -149,7 +149,7 @@ exports.checkoutRepo = function(repoPath, url, refName) {
                                                                         return NodeGit.Checkout.tree(repo, tree, {checkoutStrategy: NodeGit.Checkout.STRATEGY.FORCE});
                                                                     })
                                                                     .then(function() {
-                                                                        return repo.setHead(ref.name(), repo.defaultSignature(), 'Switched to ' + refName);
+                                                                        return repo.setHead(ref.name(), repo.defaultSignature(), 'Switched to ' + checkout);
                                                                     });
                                                             });
                                                     }
@@ -157,10 +157,10 @@ exports.checkoutRepo = function(repoPath, url, refName) {
                                         }
                                     });
                             }, function() {
-                                return NodeGit.Commit.lookup(repo, refName)
+                                return NodeGit.Commit.lookup(repo, checkout)
                                     .then(function(commit) {
                                         return NodeGit.Checkout.tree(repo, commit, {checkoutStrategy: NodeGit.Checkout.STRATEGY.SAFE_CREATE}).then(function() {
-                                            return repo.setHeadDetached(commit.id(), repo.defaultSignature(), 'Switched to ' + refName);
+                                            return repo.setHeadDetached(commit.id(), repo.defaultSignature(), 'Switched to ' + checkout);
                                         });
                                     }, function() {
                                         throw new Error('Could not identify commit to checkout!');

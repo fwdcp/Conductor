@@ -84,7 +84,7 @@ var tasks = {
             }, function(err) {
                 if (err) {
                     logger.error(chalk.bgRed('Error encountered when downloading SRCDS for TF2:'));
-                    logger.error(chalk.bgRed(err.trace || err));
+                    logger.error(chalk.bgRed(err.stack));
 
                     throw new Error('SRCDS for TF2 download failed.');
                 }
@@ -98,7 +98,7 @@ var tasks = {
             }, function(err) {
                 if (err) {
                     logger.error(chalk.bgRed('Error encountered when downloading HL2SDK for TF2:'));
-                    logger.error(chalk.bgRed(err.trace || err));
+                    logger.error(chalk.bgRed(err.stack));
 
                     throw new Error('HL2SDK for TF2 download failed.');
                 }
@@ -112,7 +112,7 @@ var tasks = {
             }, function(err) {
                 if (err) {
                     logger.error(chalk.bgRed('Error encountered when downloading Metamod:Source source:'));
-                    logger.error(chalk.bgRed(err.trace || err));
+                    logger.error(chalk.bgRed(err.stack));
 
                     throw new Error('Metamod:Source source download failed.');
                 }
@@ -126,7 +126,7 @@ var tasks = {
             }, function(err) {
                 if (err) {
                     logger.error(chalk.bgRed('Error encountered when downloading SourceMod source:'));
-                    logger.error(chalk.bgRed(err.trace || err));
+                    logger.error(chalk.bgRed(err.stack));
 
                     throw new Error('SourceMod source download failed.');
                 }
@@ -140,7 +140,7 @@ var tasks = {
             }, function(err) {
                 if (err) {
                     logger.error(chalk.bgRed('Error encountered when building Metamod:Source:'));
-                    logger.error(chalk.bgRed(err.trace || err));
+                    logger.error(chalk.bgRed(err.stack));
 
                     throw new Error('Metamod:Source build failed.');
                 }
@@ -154,7 +154,7 @@ var tasks = {
             }, function(err) {
                 if (err) {
                     logger.error(chalk.bgRed('Error encountered when building SourceMod:'));
-                    logger.error(chalk.bgRed(err.trace || err));
+                    logger.error(chalk.bgRed(err.stack));
 
                     throw new Error('SourceMod build failed.');
                 }
@@ -168,7 +168,7 @@ var tasks = {
             }, function(err) {
                 if (err) {
                     logger.error(chalk.bgRed('Error encountered when linking SRCDS for TF2:'));
-                    logger.error(chalk.bgRed(err.trace || err));
+                    logger.error(chalk.bgRed(err.stack));
 
                     throw new Error('SRCDS for TF2 files link failed.');
                 }
@@ -182,7 +182,7 @@ var tasks = {
             }, function(err) {
                 if (err) {
                     logger.error(chalk.bgRed('Error encountered when copying Metamod:Source package:'));
-                    logger.error(chalk.bgRed(err.trace || err));
+                    logger.error(chalk.bgRed(err.stack));
 
                     throw new Error('Metamod:Source package install failed.');
                 }
@@ -196,7 +196,7 @@ var tasks = {
             }, function(err) {
                 if (err) {
                     logger.error(chalk.bgRed('Error encountered when installing SourceMod package:'));
-                    logger.error(chalk.bgRed(err.trace || err));
+                    logger.error(chalk.bgRed(err.stack));
 
                     throw new Error('SourceMod package install failed.');
                 }
@@ -210,7 +210,7 @@ var tasks = {
             }, function(err) {
                 if (err) {
                     logger.error(chalk.bgRed('Error encountered when downloading SRCDS for TF2:'));
-                    logger.error(chalk.bgRed(err.trace || err));
+                    logger.error(chalk.bgRed(err.stack));
 
                     throw new Error('Metamod:Source core files update failed.');
                 }
@@ -231,7 +231,7 @@ var tasks = {
             }, function(err) {
                 if (err) {
                     logger.error(chalk.bgRed('Error encountered when downloading SRCDS for TF2:'));
-                    logger.error(chalk.bgRed(err.trace || err));
+                    logger.error(chalk.bgRed(err.stack));
 
                     throw new Error('SourceMod core files update failed.');
                 }
@@ -273,7 +273,7 @@ if (command === 'install') {
         .catch(function(err) {
             if (err) {
                 logger.error(chalk.bgRed('Install failed:'));
-                logger.error(chalk.bgRed(err.trace || err));
+                logger.error(chalk.bgRed(err.stack));
             }
         })
         .done();
@@ -284,7 +284,7 @@ else if (command === 'update') {
         .catch(function(err) {
             if (err) {
                 logger.error(chalk.bgRed('Update failed:'));
-                logger.error(chalk.bgRed(err.trace || err));
+                logger.error(chalk.bgRed(err.stack));
             }
         })
         .done();
@@ -294,7 +294,7 @@ else if (command === 'run') {
         .catch(function(err) {
             if (err) {
                 logger.error(chalk.bgRed('Run failed:'));
-                logger.error(chalk.bgRed(err.trace || err));
+                logger.error(chalk.bgRed(err.stack));
             }
         })
         .done();
@@ -305,7 +305,7 @@ else if (command === 'run-updated') {
         .catch(function(err) {
             if (err) {
                 logger.error(chalk.bgRed('Update failed:'));
-                logger.error(chalk.bgRed(err.trace || err));
+                logger.error(chalk.bgRed(err.stack));
             }
 
             throw new Error('Could not successfully update server.');
@@ -314,7 +314,7 @@ else if (command === 'run-updated') {
         .catch(function(err) {
             if (err) {
                 logger.error(chalk.bgRed('Run failed:'));
-                logger.error(chalk.bgRed(err.trace || err));
+                logger.error(chalk.bgRed(err.stack));
             }
         })
         .done();

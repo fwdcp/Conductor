@@ -109,7 +109,7 @@ var tasks = {
                 console.log(chalk.gray('Metamod:Source package copied.'));
             });
     }],
-    'sourcemod-install': ['sourcemod-build', function() {
+    'sourcemod-install': ['sourcemod-build', 'srcds-link', function() {
         console.log(chalk.gray('Copying SourceMod package...'));
         return helpers.mirror(path.join(path.resolve(argv.sourcemod), 'build', 'package'), path.join(serverPath, 'tf'), true, false)
             .then(function() {
@@ -123,7 +123,7 @@ var tasks = {
                 console.log(chalk.gray('Metamod:Source core files copied.'));
             });
     }],
-    'sourcemod-update': ['sourcemod-build', function() {
+    'sourcemod-update': ['sourcemod-build', 'srcds-link', function() {
         console.log(chalk.gray('Copying SourceMod core files...'));
         return Promise.all([
                 helpers.mirror(path.join(path.resolve(argv.sourcemod), 'build', 'package', 'addons', 'sourcemod', 'bin'), path.join(serverPath, 'tf', 'addons', 'sourcemod', 'bin'), true, false),

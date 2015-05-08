@@ -173,7 +173,7 @@ else if (command === 'run') {
     Q.fcall(function() {
         var deferred = Q.defer();
 
-        var game = child_process.spawn('./srcds_run', matches.concat([
+        var game = child_process.spawn('./srcds_run', [
             '-game', 'tf'
         ].concat(argv._.slice(2)), {
             cwd: serverPath
@@ -246,7 +246,7 @@ else if (command === 'run-updated') {
         .then(function() {
             var deferred = Q.defer();
 
-            var game = child_process.spawn('./srcds_run', matches.concat([
+            var game = child_process.spawn('./srcds_run', [
                 '-game', 'tf'
             ].concat(argv._.slice(2)), {
                 cwd: serverPath

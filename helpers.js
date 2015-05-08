@@ -64,13 +64,49 @@ exports.checkoutRepo = function(name, repoPath, url, refName) {
                     .then(function() {
                         return NodeGit.Reference.dwim(repo, refName)
                             .catch(function() {
-                                return NodeGit.Branch.lookup(repo, refName, NodeGit.Branch.BRANCH.REMOTE)
-                                    .then(function(ref) {
-                                        return repo.getCommit(ref.target());
-                                    })
-                                    .then(function(commit) {
-                                        return NodeGit.Branch.create(repo, refName, commit, 0, repo.defaultSignature());
+                                return repo.getRemotes().then(function(remotes) {
+                                    var getBranch = [];
+
+                                    remotes.forEach(function(remote) {
+                                        getBranch.push(NodeGit.Branch.lookup(repo, remote + '/' + refName, NodeGit.Branch.BRANCH.REMOTE).then(function(ref) {
+                                            return {remote: remote, ref: ref};
+                                        }, function() {
+                                            return null;
+                                        }));
                                     });
+
+                                    return Promise.all(getBranch)
+                                        .then(function(remoteBranches) {
+                                            var foundBranch = null;
+
+                                            remoteBranches.forEach(function(remoteBranch) {
+                                                if (remoteBranch && foundBranch) {
+                                                    throw new Error('Multiple remotes had the branch.');
+                                                }
+
+                                                foundBranch = remoteBranch;
+                                            });
+
+                                            if (!foundBranch) {
+                                                throw new Error('No remote had the branch.');
+                                            }
+
+                                            return foundBranch;
+                                        })
+                                        .then(function(remoteBranch) {
+                                            return repo.getCommit(remoteBranch.ref.target())
+                                                .then(function(commit) {
+                                                    return NodeGit.Branch.create(repo, refName, commit, 0, repo.defaultSignature());
+                                                })
+                                                .then(function(ref) {
+                                                    return NodeGit.Branch.name(remoteBranch.ref).then(function(name) {
+                                                        NodeGit.Branch.setUpstream(ref, name);
+
+                                                        return ref;
+                                                    });
+                                                });
+                                        });
+                                });
                             })
                             .then(function(ref) {
                                 return ref.resolve()
@@ -91,18 +127,26 @@ exports.checkoutRepo = function(name, repoPath, url, refName) {
                                                 });
                                         }
                                         else {
-                                            return repo.mergeBranches(NodeGit.Branch.name(ref), NodeGit.Branch.name(NodeGit.Branch.upstream(ref)))
-                                                .then(function() {
-                                                    repo.getCommit(ref.target());
+                                            return Q.fcall(function() {
+                                                return NodeGit.Branch.name(ref)
+                                                    .then(function(localName) {
+                                                        return NodeGit.Branch.name(NodeGit.Branch.upstream(ref))
+                                                            .then(function(remoteName) {
+                                                                return repo.mergeBranches(localName, remoteName);
+                                                            });
+                                                    });
                                                 })
-                                                .then(function(commit) {
-                                                    return commit.getTree();
-                                                })
-                                                .then(function(tree) {
-                                                    return NodeGit.Checkout.tree(repo, tree, {checkoutStrategy: NodeGit.Checkout.STRATEGY.SAFE_CREATE});
-                                                })
-                                                .then(function() {
-                                                    return repo.setHead(ref.name(), repo.defaultSignature(), 'Switched to ' + refName);
+                                                .done(function() {
+                                                    return repo.getCommit(ref.target())
+                                                        .then(function(commit) {
+                                                            return commit.getTree();
+                                                        })
+                                                        .then(function(tree) {
+                                                            return NodeGit.Checkout.tree(repo, tree, {checkoutStrategy: NodeGit.Checkout.STRATEGY.SAFE_CREATE});
+                                                        })
+                                                        .then(function() {
+                                                            return repo.setHead(ref.name(), repo.defaultSignature(), 'Switched to ' + refName);
+                                                        });
                                                 });
                                         }
                                     });

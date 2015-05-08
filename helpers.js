@@ -140,7 +140,7 @@ exports.checkoutRepo = function(name, repoPath, url, refName) {
                                                 }
                                             })
                                                 .done(function() {
-                                                    return repo.getCommit(branch.target())
+                                                    return repo.getCommit(ref.target())
                                                         .then(function(commit) {
                                                             return commit.getTree();
                                                         })
@@ -148,7 +148,7 @@ exports.checkoutRepo = function(name, repoPath, url, refName) {
                                                             return NodeGit.Checkout.tree(repo, tree, {checkoutStrategy: NodeGit.Checkout.STRATEGY.SAFE_CREATE});
                                                         })
                                                         .then(function() {
-                                                            return repo.setHead(branch.name(), repo.defaultSignature(), 'Switched to ' + refName);
+                                                            return repo.setHead(ref.name(), repo.defaultSignature(), 'Switched to ' + refName);
                                                         });
                                                 });
                                         }

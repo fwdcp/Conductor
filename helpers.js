@@ -96,7 +96,7 @@ exports.checkoutRepo = function(name, repoPath, url, refName) {
                                         .then(function(remoteBranch) {
                                             return repo.getCommit(remoteBranch.ref.target())
                                                 .then(function(commit) {
-                                                    return NodeGit.Branch.create(repo, refName, commit, 0, repo.defaultSignature());
+                                                    return NodeGit.Branch.create(repo, refName, commit, 0, repo.defaultSignature(), null);
                                                 })
                                                 .then(function(ref) {
                                                     return NodeGit.Branch.name(remoteBranch.ref).then(function(name) {

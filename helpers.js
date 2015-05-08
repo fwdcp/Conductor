@@ -99,11 +99,14 @@ exports.checkoutRepo = function(name, repoPath, url, refName) {
                                                     return NodeGit.Branch.create(repo, refName, commit, 0, repo.defaultSignature(), null);
                                                 })
                                                 .then(function(ref) {
-                                                    return NodeGit.Branch.name(remoteBranch.ref).then(function(name) {
-                                                        NodeGit.Branch.setUpstream(ref, name);
+                                                    // getting the name of an upstream branch causes crashes, so let's avoid that
+                                                    var match = /refs\/remotes\/(.+)/.exec(remoteBranch.ref.name());
 
-                                                        return ref;
-                                                    });
+                                                    if (match && match[1]) {
+                                                        NodeGit.Branch.setUpstream(ref, match[1]);
+                                                    }
+
+                                                    return ref;
                                                 });
                                         });
                                 });
@@ -127,17 +130,21 @@ exports.checkoutRepo = function(name, repoPath, url, refName) {
                                                 });
                                         }
                                         else {
+                                            var branch = ref;
+
                                             return Q.fcall(function() {
-                                                return NodeGit.Branch.name(ref)
+                                                return NodeGit.Branch.name(branch)
                                                     .then(function(localName) {
-                                                        return NodeGit.Branch.name(NodeGit.Branch.upstream(ref))
-                                                            .then(function(remoteName) {
-                                                                return repo.mergeBranches(localName, remoteName);
-                                                            });
+                                                        // getting the name of an upstream branch causes crashes, so let's avoid that
+                                                        var match = /refs\/remotes\/(.+)/.exec(remoteBranch.ref.name());
+
+                                                        if (match && match[1]) {
+                                                            return repo.mergeBranches(localName, match[1]);
+                                                        }
                                                     });
                                                 })
                                                 .done(function() {
-                                                    return repo.getCommit(ref.target())
+                                                    return repo.getCommit(branch.target())
                                                         .then(function(commit) {
                                                             return commit.getTree();
                                                         })
@@ -145,7 +152,7 @@ exports.checkoutRepo = function(name, repoPath, url, refName) {
                                                             return NodeGit.Checkout.tree(repo, tree, {checkoutStrategy: NodeGit.Checkout.STRATEGY.SAFE_CREATE});
                                                         })
                                                         .then(function() {
-                                                            return repo.setHead(ref.name(), repo.defaultSignature(), 'Switched to ' + refName);
+                                                            return repo.setHead(branch.name(), repo.defaultSignature(), 'Switched to ' + refName);
                                                         });
                                                 });
                                         }
@@ -179,7 +186,8 @@ exports.checkoutRepo = function(name, repoPath, url, refName) {
 
                                 if (match && match[1]) {
                                     return NodeGit.Submodule.lookup(repo, match[1]).then(function(submodule) {
-                                        return submodule.update(1, null);
+                                        // for some reason updating submodules doesn't work either...
+                                        // return submodule.update(1, null);
                                     });
                                 }
                             }));

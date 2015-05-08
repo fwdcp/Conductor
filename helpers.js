@@ -54,15 +54,11 @@ module.exports = function(logger) {
                 })
                 .then(function(repo) {
                     if (checkout) {
-                        return repo.getStatusExt()
-                            .then(function(statuses) {
-                                if (statuses.length !== 0) {
-                                    throw new Error('Uncommitted changes prevent checking out new version.');
-                                }
-                            })
-                            .then(function() {
-                                return repo.fetchAll({});
-                            })
+                        if (repo.getStatusExt().length !== 0) {
+                            throw new Error('Uncommitted changes prevent checking out new version.');
+                        }
+
+                        return repo.fetchAll({})
                             .then(function() {
                                 return NodeGit.Reference.dwim(repo, checkout)
                                     .catch(function() {

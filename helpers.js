@@ -64,36 +64,17 @@ exports.checkoutRepo = function(name, repoPath, url, refName) {
                     .then(function() {
                         return NodeGit.Reference.dwim(repo, refName)
                             .catch(function() {
-                                return repo.getRemotes().then(function(remotes) {
-                                    var getBranch = [];
-
-                                    remotes.forEach(function(remote) {
-                                        getBranch.push(NodeGit.Reference.dwim(repo, remote + '/' + refName).catch(function() {
-                                            return null;
-                                        }));
+                                return NodeGit.Branch.lookup(repo, refName, NodeGit.Branch.BRANCH.REMOTE)
+                                    .then(function(ref) {
+                                        return repo.getCommit(ref.target());
+                                    })
+                                    .then(function(commit) {
+                                        return NodeGit.Branch.create(repo, refName, commit, 0, repo.defaultSignature());
                                     });
-
-                                    return Promise.all(getBranch).then(function(refs) {
-                                        var branch = null;
-
-                                        refs.forEach(function(ref) {
-                                            if (ref && branch) {
-                                                throw new Error('Multiple remotes had the branch.');
-                                            }
-
-                                            branch = ref;
-                                        });
-
-                                        if (!branch) {
-                                            throw new Error('No remote had the branch.');
-                                        }
-
-                                        return branch;
-                                    });
-                                })
                             })
                             .then(function(ref) {
-                                return Q.fcall(function() {
+                                return ref.resolve()
+                                    .then(function(ref) {
                                         if (ref.isTag()) {
                                             return repo.getTag(ref.target())
                                                 .then(function(tag) {
@@ -110,7 +91,10 @@ exports.checkoutRepo = function(name, repoPath, url, refName) {
                                                 });
                                         }
                                         else {
-                                            return repo.getCommit(ref.target())
+                                            return repo.mergeBranches(NodeGit.Branch.name(ref), NodeGit.Branch.name(NodeGit.Branch.upstream(ref)))
+                                                .then(function() {
+                                                    repo.getCommit(ref.target());
+                                                })
                                                 .then(function(commit) {
                                                     return commit.getTree();
                                                 })
@@ -130,7 +114,7 @@ exports.checkoutRepo = function(name, repoPath, url, refName) {
                                             return repo.setHeadDetached(commit.id(), repo.defaultSignature(), 'Switched to ' + refName);
                                         });
                                     });
-                            })
+                            });
                     })
                     .then(function() {
                         return repo;

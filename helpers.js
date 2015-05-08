@@ -157,7 +157,7 @@ exports.checkoutRepo = function(repoPath, url, checkout) {
                                         }
                                     });
                             }, function() {
-                                return NodeGit.Commit.lookup(repo, checkout)
+                                return NodeGit.Commit.lookupPrefix(repo, NodeGit.Oid.fromString((checkout + '0000000000000000000000000000000000000000').slice(0, 40)), checkout.length)
                                     .then(function(commit) {
                                         return NodeGit.Checkout.tree(repo, commit, {checkoutStrategy: NodeGit.Checkout.STRATEGY.SAFE_CREATE}).then(function() {
                                             return repo.setHeadDetached(commit.id(), repo.defaultSignature(), 'Switched to ' + checkout);

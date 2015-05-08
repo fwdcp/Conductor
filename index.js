@@ -51,13 +51,13 @@ var serverPath = path.resolve(argv._[1]);
 
 var logLevel = 'info';
 
-if (argv.verbose == 0) {
+if (argv.verbose === 0) {
     logLevel = 'info';
 }
-else if (argv.verbose == 1) {
+else if (argv.verbose === 1) {
     logLevel = 'verbose';
 }
-else if (argv.verbose == 2) {
+else if (argv.verbose === 2) {
     logLevel = 'debug';
 }
 else if (argv.verbose >= 3) {
@@ -74,8 +74,6 @@ var logger = new (winston.Logger)({
 });
 
 var helpers = require('./helpers')(logger);
-
-var tasks = {};
 
 var tasks = {
     'srcds-download': function() {
@@ -163,10 +161,10 @@ var tasks = {
             });
     }],
     'srcds-link': ['srcds-download', function() {
-        logger.info(chalk.green('Linking SRCDS for TF2 files...'));
+        logger.info(chalk.gray('Linking SRCDS for TF2 files...'));
         return helpers.mirrorLink('SRCDS link', path.join(path.resolve(argv.steamcmd), 'steamapps', 'common', 'Team Fortress 2 Dedicated Server'), serverPath, true, true)
             .then(function() {
-                logger.info(chalk.green('SRCDS for TF2 files linked.'));
+                logger.info(chalk.gray('SRCDS for TF2 files linked.'));
             }, function(err) {
                 if (err) {
                     logger.error(chalk.bgRed('Error encountered when linking SRCDS for TF2:'));

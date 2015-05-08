@@ -156,13 +156,14 @@ exports.checkoutRepo = function(repoPath, url, refName) {
                                                 });
                                         }
                                     });
-                            })
-                            .catch(function() {
+                            }, function() {
                                 return NodeGit.Commit.lookup(repo, refName)
                                     .then(function(commit) {
                                         return NodeGit.Checkout.tree(repo, commit, {checkoutStrategy: NodeGit.Checkout.STRATEGY.SAFE_CREATE}).then(function() {
                                             return repo.setHeadDetached(commit.id(), repo.defaultSignature(), 'Switched to ' + refName);
                                         });
+                                    }, function() {
+                                        throw new Error('Could not identify commit to checkout!');
                                     });
                             });
                     })

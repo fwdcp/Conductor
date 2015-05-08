@@ -266,6 +266,10 @@ function runServer() {
         }
     });
 
+    process.on('exit', function () {
+        game.kill('SIGINT');
+    });
+
     return deferred.promise;
 }
 
@@ -276,6 +280,8 @@ if (command === 'install') {
             if (err) {
                 logger.error(chalk.bgRed('Install failed:'));
                 logger.error(chalk.bgRed(err.stack));
+
+                process.exit(1);
             }
         })
         .done();
@@ -287,6 +293,8 @@ else if (command === 'update') {
             if (err) {
                 logger.error(chalk.bgRed('Update failed:'));
                 logger.error(chalk.bgRed(err.stack));
+
+                process.exit(1);
             }
         })
         .done();
@@ -297,6 +305,8 @@ else if (command === 'run') {
             if (err) {
                 logger.error(chalk.bgRed('Run failed:'));
                 logger.error(chalk.bgRed(err.stack));
+
+                process.exit(1);
             }
         })
         .done();
@@ -308,15 +318,17 @@ else if (command === 'run-updated') {
             if (err) {
                 logger.error(chalk.bgRed('Update failed:'));
                 logger.error(chalk.bgRed(err.stack));
-            }
 
-            throw new Error('Could not successfully update server.');
+                process.exit(1);
+            }
         })
         .then(runServer)
         .catch(function(err) {
             if (err) {
                 logger.error(chalk.bgRed('Run failed:'));
                 logger.error(chalk.bgRed(err.stack));
+
+                process.exit(1);
             }
         })
         .done();

@@ -20,6 +20,10 @@ var argv = yargs
     .describe('steamcmd', 'path to the SteamCMD installation location')
     .requiresArg('steamcmd')
     .string('steamcmd')
+    .default('steamapps', './Steam/steamapps')
+    .describe('steamapps', 'path to the SteamApps directory')
+    .requiresArg('steamapps')
+    .string('steamapps')
     .default('hl2sdk', './hl2sdk-tf2')
     .describe('hl2sdk', 'path to the HL2SDK Git repository')
     .requiresArg('hl2sdk')
@@ -162,7 +166,7 @@ var tasks = {
     }],
     'srcds-link': ['srcds-download', function() {
         logger.info(chalk.gray('Linking SRCDS for TF2 files...'));
-        return helpers.mirrorLink('SRCDS link', path.join(path.resolve(argv.steamcmd), 'steamapps', 'common', 'Team Fortress 2 Dedicated Server'), serverPath, true, true)
+        return helpers.mirrorLink('SRCDS link', path.join(path.resolve(argv.steamapps), 'common', 'Team Fortress 2 Dedicated Server'), serverPath, true, true)
             .then(function() {
                 logger.info(chalk.gray('SRCDS for TF2 files linked.'));
             }, function(err) {

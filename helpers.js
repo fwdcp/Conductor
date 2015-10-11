@@ -140,7 +140,7 @@ module.exports = function(logger) {
                                                                             return NodeGit.Checkout.tree(repo, tree, {checkoutStrategy: NodeGit.Checkout.STRATEGY.SAFE_CREATE});
                                                                         })
                                                                         .then(function() {
-                                                                            return repo.setHeadDetached(tag.targetId(), repo.defaultSignature(), 'Switched to ' + checkout);
+                                                                            return repo.setHeadDetached(tag.targetId());
                                                                         });
                                                                 });
                                                         }
@@ -172,7 +172,7 @@ module.exports = function(logger) {
                                                                                         return NodeGit.Checkout.tree(repo, tree, {checkoutStrategy: NodeGit.Checkout.STRATEGY.FORCE});
                                                                                     })
                                                                                     .then(function() {
-                                                                                        return repo.setHead(ref.name(), repo.defaultSignature(), 'Switched to ' + checkout);
+                                                                                        return repo.setHead(ref.name());
                                                                                     });
                                                                             });
                                                                     }
@@ -188,7 +188,7 @@ module.exports = function(logger) {
                                                         logger.log('verbose', '[' + name + '] Checking out tag...');
 
                                                         return NodeGit.Checkout.tree(repo, commit, {checkoutStrategy: NodeGit.Checkout.STRATEGY.SAFE_CREATE}).then(function() {
-                                                            return repo.setHeadDetached(commit.id(), repo.defaultSignature(), 'Switched to ' + checkout);
+                                                            return repo.setHeadDetached(commit.id());
                                                         });
                                                     }, function() {
                                                         throw new Error('Could not identify commit to checkout!');

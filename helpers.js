@@ -214,7 +214,7 @@ module.exports = function(logger) {
 
                                     return NodeGit.Submodule.lookup(repo, info.path).then(function(submodule) {
                                         submodule.init(1);
-                                        submodule.update(1, new Git.CheckoutOptions());
+                                        submodule.update(1, new NodeGit.CheckoutOptions());
                                     });
                                 }
                             }));

@@ -57,173 +57,169 @@ module.exports = function(logger) {
                 })
                 .then(function(repo) {
                     if (checkout) {
-                        if (repo.getStatusExt().length !== 0) {
-                            throw new Error('Uncommitted changes prevent checking out new version.');
-                        }
+                        return repo.getStatusExt()
+                            .then(function(statuses) {
+                                if (statuses.length !== 0) {
+                                    throw new Error('Uncommitted changes prevent checking out new version.');
+                                }
 
-                        logger.log('verbose', '[' + name + '] Fetching all remotes...');
+                                logger.log('verbose', '[' + name + '] Fetching all remotes...');
 
-                        return repo.fetchAll({})
-                            .then(function() {
-                                logger.log('verbose', '[' + name + '] Looking up reference name...');
+                                return repo.fetchAll({})
+                                    .then(function() {
+                                        logger.log('verbose', '[' + name + '] Looking up reference name...');
 
-                                return NodeGit.Reference.dwim(repo, checkout)
-                                    .catch(function() {
-                                        logger.log('verbose', '[' + name + '] Local reference not found. Looking up remote branches...');
+                                        return NodeGit.Reference.dwim(repo, checkout)
+                                            .catch(function() {
+                                                logger.log('verbose', '[' + name + '] Local reference not found. Looking up remote branches...');
 
-                                        return repo.getRemotes().then(function(remotes) {
-                                            var getBranch = [];
+                                                return repo.getRemotes().then(function(remotes) {
+                                                    var getBranch = [];
 
-                                            remotes.forEach(function(remote) {
-                                                getBranch.push(NodeGit.Branch.lookup(repo, remote + '/' + checkout, NodeGit.Branch.BRANCH.REMOTE).then(function(ref) {
-                                                    return {remote: remote, ref: ref};
-                                                }, function() {
-                                                    return null;
-                                                }));
-                                            });
-
-                                            return Promise.all(getBranch)
-                                                .then(function(remoteBranches) {
-                                                    var foundBranch = null;
-
-                                                    remoteBranches.forEach(function(remoteBranch) {
-                                                        if (remoteBranch && foundBranch) {
-                                                            throw new Error('Multiple remotes had the branch.');
-                                                        }
-
-                                                        foundBranch = remoteBranch;
+                                                    remotes.forEach(function(remote) {
+                                                        getBranch.push(NodeGit.Branch.lookup(repo, remote + '/' + checkout, NodeGit.Branch.BRANCH.REMOTE).then(function(ref) {
+                                                            return {remote: remote, ref: ref};
+                                                        }, function() {
+                                                            return null;
+                                                        }));
                                                     });
 
-                                                    if (!foundBranch) {
-                                                        throw new Error('No remote had the branch.');
-                                                    }
+                                                    return Promise.all(getBranch)
+                                                        .then(function(remoteBranches) {
+                                                            var foundBranch = null;
 
-                                                    return foundBranch;
-                                                })
-                                                .then(function(remoteBranch) {
-                                                    logger.log('verbose', '[' + name + '] Found remote branch ' + remoteBranch.remote + '/' + refName + '.');
+                                                            remoteBranches.forEach(function(remoteBranch) {
+                                                                if (remoteBranch && foundBranch) {
+                                                                    throw new Error('Multiple remotes had the branch.');
+                                                                }
 
-                                                    logger.log('verbose', '[' + name + '] Checking out remote branch locally...');
+                                                                foundBranch = remoteBranch;
+                                                            });
 
-                                                    return repo.getCommit(remoteBranch.ref.target())
-                                                        .then(function(commit) {
-                                                            return NodeGit.Branch.create(repo, checkout, commit, 0, repo.defaultSignature(), null);
-                                                        })
-                                                        .then(function(ref) {
-                                                            // getting the name of a branch causes crashes, so let's avoid that
-                                                            var match = /refs\/remotes\/(.+)/.exec(remoteBranch.ref.name());
-
-                                                            if (match && match[1]) {
-                                                                NodeGit.Branch.setUpstream(ref, match[1]);
+                                                            if (!foundBranch) {
+                                                                throw new Error('No remote had the branch.');
                                                             }
 
-                                                            return ref;
-                                                        });
-                                                });
-                                        });
-                                    })
-                                    .then(function(ref) {
-                                        return ref.resolve()
-                                            .then(function(ref) {
-                                                if (ref.isTag()) {
-                                                    logger.log('verbose', '[' + name + '] Checking out tag...');
+                                                            return foundBranch;
+                                                        })
+                                                        .then(function(remoteBranch) {
+                                                            logger.log('verbose', '[' + name + '] Found remote branch ' + remoteBranch.remote + '/' + refName + '.');
 
-                                                    return repo.getTag(ref.target())
-                                                        .then(function(tag) {
-                                                            return repo.getCommit(tag.targetId())
+                                                            logger.log('verbose', '[' + name + '] Checking out remote branch locally...');
+
+                                                            return repo.getCommit(remoteBranch.ref.target())
                                                                 .then(function(commit) {
-                                                                    return commit.getTree();
+                                                                    return NodeGit.Branch.create(repo, checkout, commit, 0, repo.defaultSignature(), null);
                                                                 })
-                                                                .then(function(tree) {
-                                                                    return NodeGit.Checkout.tree(repo, tree, {checkoutStrategy: NodeGit.Checkout.STRATEGY.SAFE_CREATE});
-                                                                })
-                                                                .then(function() {
-                                                                    return repo.setHeadDetached(tag.targetId(), repo.defaultSignature(), 'Switched to ' + checkout);
+                                                                .then(function(ref) {
+                                                                    // getting the name of a branch causes crashes, so let's avoid that
+                                                                    var match = /refs\/remotes\/(.+)/.exec(remoteBranch.ref.name());
+
+                                                                    if (match && match[1]) {
+                                                                        NodeGit.Branch.setUpstream(ref, match[1]);
+                                                                    }
+
+                                                                    return ref;
                                                                 });
                                                         });
-                                                }
-                                                else {
-                                                    return Q.fcall(function() {
-                                                        // getting the name of a branch causes crashes, so let's avoid that
-                                                        var localMatch = /refs\/heads\/(.+)/.exec(ref.name());
-                                                        var upstreamMatch = /refs\/remotes\/(.+)/.exec(NodeGit.Branch.upstream(ref).name());
-
-                                                        if (localMatch && localMatch[1] && upstreamMatch && upstreamMatch[1]) {
-                                                            logger.log('verbose', '[' + name + '] Merging upstream branch ' + upstreamMatch[1] + ' into local branch ' + localMatch[1] + '...');
-
-                                                            return repo.mergeBranches(localMatch[1], upstreamMatch[1]);
-                                                        }
-                                                    })
-                                                        .done(function() {
-                                                            logger.log('verbose', '[' + name + '] Checking out branch...');
-
-                                                            var match = /refs\/heads\/(.+)/.exec(ref.name());
-
-                                                            if (match && match[1]) {
-                                                                return NodeGit.Reference.dwim(repo, match[1])
-                                                                    .then(function(ref) {
-                                                                        return repo.getCommit(ref.target())
-                                                                            .then(function(commit) {
-                                                                                return commit.getTree();
-                                                                            })
-                                                                            .then(function(tree) {
-                                                                                return NodeGit.Checkout.tree(repo, tree, {checkoutStrategy: NodeGit.Checkout.STRATEGY.FORCE});
-                                                                            })
-                                                                            .then(function() {
-                                                                                return repo.setHead(ref.name(), repo.defaultSignature(), 'Switched to ' + checkout);
-                                                                            });
-                                                                    });
-                                                            }
-                                                        });
-                                                }
-                                            });
-                                    }, function() {
-                                        logger.log('verbose', '[' + name + '] No valid reference found. Searching commits...');
-
-                                        return NodeGit.Commit.lookupPrefix(repo, NodeGit.Oid.fromString((checkout + '0000000000000000000000000000000000000000').slice(0, 40)), checkout.length)
-                                            .then(function(commit) {
-                                                logger.log('verbose', '[' + name + '] Found valid commit ' + commit.id() + '.');
-                                                logger.log('verbose', '[' + name + '] Checking out tag...');
-
-                                                return NodeGit.Checkout.tree(repo, commit, {checkoutStrategy: NodeGit.Checkout.STRATEGY.SAFE_CREATE}).then(function() {
-                                                    return repo.setHeadDetached(commit.id(), repo.defaultSignature(), 'Switched to ' + checkout);
                                                 });
+                                            })
+                                            .then(function(ref) {
+                                                return ref.resolve()
+                                                    .then(function(ref) {
+                                                        if (ref.isTag()) {
+                                                            logger.log('verbose', '[' + name + '] Checking out tag...');
+
+                                                            return repo.getTag(ref.target())
+                                                                .then(function(tag) {
+                                                                    return repo.getCommit(tag.targetId())
+                                                                        .then(function(commit) {
+                                                                            return commit.getTree();
+                                                                        })
+                                                                        .then(function(tree) {
+                                                                            return NodeGit.Checkout.tree(repo, tree, {checkoutStrategy: NodeGit.Checkout.STRATEGY.SAFE_CREATE});
+                                                                        })
+                                                                        .then(function() {
+                                                                            return repo.setHeadDetached(tag.targetId(), repo.defaultSignature(), 'Switched to ' + checkout);
+                                                                        });
+                                                                });
+                                                        }
+                                                        else {
+                                                            return Q.fcall(function() {
+                                                                // getting the name of a branch causes crashes, so let's avoid that
+                                                                var localMatch = /refs\/heads\/(.+)/.exec(ref.name());
+                                                                var upstreamMatch = /refs\/remotes\/(.+)/.exec(NodeGit.Branch.upstream(ref).name());
+
+                                                                if (localMatch && localMatch[1] && upstreamMatch && upstreamMatch[1]) {
+                                                                    logger.log('verbose', '[' + name + '] Merging upstream branch ' + upstreamMatch[1] + ' into local branch ' + localMatch[1] + '...');
+
+                                                                    return repo.mergeBranches(localMatch[1], upstreamMatch[1]);
+                                                                }
+                                                            })
+                                                                .done(function() {
+                                                                    logger.log('verbose', '[' + name + '] Checking out branch...');
+
+                                                                    var match = /refs\/heads\/(.+)/.exec(ref.name());
+
+                                                                    if (match && match[1]) {
+                                                                        return NodeGit.Reference.dwim(repo, match[1])
+                                                                            .then(function(ref) {
+                                                                                return repo.getCommit(ref.target())
+                                                                                    .then(function(commit) {
+                                                                                        return commit.getTree();
+                                                                                    })
+                                                                                    .then(function(tree) {
+                                                                                        return NodeGit.Checkout.tree(repo, tree, {checkoutStrategy: NodeGit.Checkout.STRATEGY.FORCE});
+                                                                                    })
+                                                                                    .then(function() {
+                                                                                        return repo.setHead(ref.name(), repo.defaultSignature(), 'Switched to ' + checkout);
+                                                                                    });
+                                                                            });
+                                                                    }
+                                                                });
+                                                        }
+                                                    });
                                             }, function() {
-                                                throw new Error('Could not identify commit to checkout!');
+                                                logger.log('verbose', '[' + name + '] No valid reference found. Searching commits...');
+
+                                                return NodeGit.Commit.lookupPrefix(repo, NodeGit.Oid.fromString((checkout + '0000000000000000000000000000000000000000').slice(0, 40)), checkout.length)
+                                                    .then(function(commit) {
+                                                        logger.log('verbose', '[' + name + '] Found valid commit ' + commit.id() + '.');
+                                                        logger.log('verbose', '[' + name + '] Checking out tag...');
+
+                                                        return NodeGit.Checkout.tree(repo, commit, {checkoutStrategy: NodeGit.Checkout.STRATEGY.SAFE_CREATE}).then(function() {
+                                                            return repo.setHeadDetached(commit.id(), repo.defaultSignature(), 'Switched to ' + checkout);
+                                                        });
+                                                    }, function() {
+                                                        throw new Error('Could not identify commit to checkout!');
+                                                    });
                                             });
+                                    })
+                                    .then(function() {
+                                        return repo;
                                     });
-                            })
-                            .then(function() {
-                                return repo;
                             });
                     }
                 })
                 .then(function(repo) {
-                    return Q.fcall(function() {
-                        logger.log('verbose', '[' + name + '] Reloading submodule info...');
+                    return Q.nfcall(fs.readFile, path.join(repoPath, '.gitmodules'), 'utf-8')
+                        .then(function(data) {
+                            var submoduleConfig = ini.parse(data);
 
-                        return NodeGit.Submodule.reloadAll(repo, 1);
-                    })
-                        .then(function() {
-                            return Q.nfcall(fs.readFile, path.join(repoPath, '.gitmodules'), 'utf-8')
-                                .then(function(data) {
-                                    var submoduleConfig = ini.parse(data);
+                            return Promise.all(Object.keys(submoduleConfig).map(function(sectionName) {
+                                var match = /submodule \"(.+)\"/.exec(sectionName);
 
-                                    return Promise.all(Object.keys(submoduleConfig).map(function(sectionName) {
-                                        var match = /submodule \"(.+)\"/.exec(sectionName);
+                                if (match && match[1]) {
+                                    var info = submoduleConfig[sectionName];
 
-                                        if (match && match[1]) {
-                                            var info = submoduleConfig[sectionName];
-
-                                            return NodeGit.Submodule.lookup(repo, info.path).then(function(submodule) {
-                                                submodule.init(1);
-                                                submodule.update(1, new Git.CheckoutOptions());
-                                            });
-                                        }
-                                    }));
-                                }, function() {
-                                    return;
-                                });
+                                    return NodeGit.Submodule.lookup(repo, info.path).then(function(submodule) {
+                                        submodule.init(1);
+                                        submodule.update(1, new Git.CheckoutOptions());
+                                    });
+                                }
+                            }));
+                        }, function() {
+                            return;
                         });
                 });
         },

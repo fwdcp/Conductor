@@ -205,59 +205,25 @@ module.exports = function(logger) {
                         return NodeGit.Submodule.reloadAll(repo, 1);
                     })
                         .then(function() {
-                            // for some reason updating submodules doesn't work either...
+                            return Q.nfcall(fs.readFile, path.join(repoPath, '.gitmodules'), 'utf-8')
+                                .then(function(data) {
+                                    var submoduleConfig = ini.parse(data);
 
-                            // return Q.nfcall(fs.readFile, path.join(repoPath, '.gitmodules'), 'utf-8')
-                            //     .then(function(data) {
-                            //         var submoduleConfig = ini.parse(data);
-                            //
-                            //         return Promise.all(Object.keys(submoduleConfig).map(function(sectionName) {
-                            //             var match = /submodule \"(.+)\"/.exec(sectionName);
-                            //
-                            //             if (match && match[1]) {
-                            //                 return NodeGit.Submodule.lookup(repo, match[1]).then(function(submodule) {
-                            //                     return submodule.update(1, null);
-                            //                 });
-                            //             }
-                            //         }));
-                            //     }, function() {
-                            //         return;
-                            //     });
+                                    return Promise.all(Object.keys(submoduleConfig).map(function(sectionName) {
+                                        var match = /submodule \"(.+)\"/.exec(sectionName);
 
-                            var deferred = Q.defer();
+                                        if (match && match[1]) {
+                                            var info = submoduleConfig[sectionName];
 
-                            // for some reason this has an issue if not delayed
-                            setTimeout(function() {
-                                logger.log('verbose', '[' + name + '] Updating submodules...');
-
-                                var submoduleUpdate = child_process.spawn('git', [
-                                    'submodule', 'update',
-                                    '--init', '--recursive'
-                                ], {
-                                    cwd: repoPath
+                                            return NodeGit.Submodule.lookup(repo, info.path).then(function(submodule) {
+                                                submodule.init(1);
+                                                submodule.update(1, new Git.CheckoutOptions());
+                                            });
+                                        }
+                                    }));
+                                }, function() {
+                                    return;
                                 });
-
-                                submoduleUpdate.stdout.on('data', function(out) {
-                                    logger.log('debug', '[' + name + ' - Git submodule update] ' + out);
-                                });
-                                submoduleUpdate.stderr.on('data', function(out) {
-                                    logger.log('warn', '[' + name + ' - Git submodule update] ' + out);
-                                });
-
-                                submoduleUpdate.on('exit', function(code, signal) {
-                                    if (signal) {
-                                        deferred.reject(new Error('Git submodule update was killed with signal: ' + signal));
-                                    }
-                                    else if (code) {
-                                        deferred.reject(new Error('Git submodule update exited with code: ' + code));
-                                    }
-                                    else {
-                                        deferred.resolve();
-                                    }
-                                });
-                            }, 1000);
-
-                            return deferred.promise;
                         });
                 });
         },

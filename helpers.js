@@ -202,25 +202,44 @@ module.exports = function(logger) {
                     }
                 })
                 .then(function(repo) {
-                    return Q.nfcall(fs.readFile, path.join(repoPath, '.gitmodules'), 'utf-8')
-                        .then(function(data) {
-                            var submoduleConfig = ini.parse(data);
+                    return Q.fcall(function() {
+                        // for some reason updating submodules doesn't work either...
 
-                            return Promise.all(Object.keys(submoduleConfig).map(function(sectionName) {
-                                var match = /submodule \"(.+)\"/.exec(sectionName);
+                        var deferred = Q.defer();
 
-                                if (match && match[1]) {
-                                    var info = submoduleConfig[sectionName];
+                        // for some reason this has an issue if not delayed
+                        setTimeout(function() {
+                            logger.log('verbose', '[' + name + '] Updating submodules...');
 
-                                    return NodeGit.Submodule.lookup(repo, info.path).then(function(submodule) {
-                                        submodule.init(1);
-                                        submodule.update(1, new NodeGit.CheckoutOptions());
-                                    });
+                            var submoduleUpdate = child_process.spawn('git', [
+                                'submodule', 'update',
+                                '--init', '--recursive'
+                            ], {
+                                cwd: repoPath
+                            });
+
+                            submoduleUpdate.stdout.on('data', function(out) {
+                                logger.log('debug', '[' + name + ' - Git submodule update] ' + out);
+                            });
+                            submoduleUpdate.stderr.on('data', function(out) {
+                                logger.log('warn', '[' + name + ' - Git submodule update] ' + out);
+                            });
+
+                            submoduleUpdate.on('exit', function(code, signal) {
+                                if (signal) {
+                                    deferred.reject(new Error('Git submodule update was killed with signal: ' + signal));
                                 }
-                            }));
-                        }, function() {
-                            return;
-                        });
+                                else if (code) {
+                                    deferred.reject(new Error('Git submodule update exited with code: ' + code));
+                                }
+                                else {
+                                    deferred.resolve();
+                                }
+                            });
+                        }, 1000);
+
+                        return deferred.promise;
+                    });
                 });
         },
         ambuild: function(name, repo, extraArgs, extraEnv) {

@@ -270,7 +270,9 @@ function runServer() {
         }
     });
 
-    process.on('exit', function () {
+    process.on('exit', function() {
+        // TODO: make cross-platform
+        child_process.exec('pkill -INT -P ' + game.pid);
         game.kill('SIGINT');
     });
 

@@ -148,13 +148,16 @@ module.exports = function(logger) {
                                                             return Q.fcall(function() {
                                                                 // getting the name of a branch causes crashes, so let's avoid that
                                                                 var localMatch = /refs\/heads\/(.+)/.exec(ref.name());
-                                                                var upstreamMatch = /refs\/remotes\/(.+)/.exec(NodeGit.Branch.upstream(ref).name());
 
-                                                                if (localMatch && localMatch[1] && upstreamMatch && upstreamMatch[1]) {
-                                                                    logger.log('verbose', '[' + name + '] Merging upstream branch ' + upstreamMatch[1] + ' into local branch ' + localMatch[1] + '...');
+                                                                return NodeGit.Branch.upstream(ref).then(function(upstreamRef) {
+                                                                    var upstreamMatch = /refs\/remotes\/(.+)/.exec(upstreamRef.name());
 
-                                                                    return repo.mergeBranches(localMatch[1], upstreamMatch[1]);
-                                                                }
+                                                                    if (localMatch && localMatch[1] && upstreamMatch && upstreamMatch[1]) {
+                                                                        logger.log('verbose', '[' + name + '] Merging upstream branch ' + upstreamMatch[1] + ' into local branch ' + localMatch[1] + '...');
+
+                                                                        return repo.mergeBranches(localMatch[1], upstreamMatch[1]);
+                                                                    }
+                                                                });
                                                             })
                                                                 .done(function() {
                                                                     logger.log('verbose', '[' + name + '] Checking out branch...');
